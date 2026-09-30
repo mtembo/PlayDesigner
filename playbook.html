@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<!--
+  Offensive Playbook Designer
+  I built this to draw, save and print offensive plays for 11-man, 7v7 and 5v5 flag.
+
+  Version history (newest first)
+  v1.6  9/28/26  M. Tembo  Saved formations: I line players up, name it and save it. Saving a name that
+                           already exists in that game format overwrites it, stock formations included.
+                           Saved formations sync and ride along in export/import.
+  v1.5  9/28/26  M. Tembo  Export and import the whole playbook (plays and saved routes) as a backup
+                           file, so I can move it between devices and between the link and a local copy.
+  v1.4  9/28/26  M. Tembo  Added Out n up and Hitch and go, plus my own saved routes: I draw a route,
+                           name it and save it to the route tree. Saved routes sync with the playbook.
+  v1.3  9/28/26  M. Tembo  Flip keeps the offensive line in order (LT, LG, C, RG, RT left to right).
+  v1.2  9/28/26  M. Tembo  A player can block and then release into a route (motion, then block,
+                           then route). Older saved blocks convert on load.
+  v1.1  9/28/26  M. Tembo  Motion and a route/block can now live on the same player; the route
+                           starts where the motion ends. Older saved plays convert on load.
+  v1.0  9/28/26  M. Tembo  First version: formations, drag players, routes/motion/blocks,
+                           route tree shortcuts, read order, saved playbook, print and SVG export.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Offensive Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* I keep every color as a token so light and dark both work. M. Tembo - 9/28/26 */
+  :root {
+    --bg: #E8ECE9;
+    --panel: #FFFFFF;
+    --ink: #1B1F24;
+    --muted: #5B6670;
+    --line: #CDD5D0;
+    --turf: #2F5D3A;
+    --turf-2: #2A5434;
+    --chalk: #F4F7F2;
+    --route: #C8102E;
+    --motion: #1F5FBF;
+    --block: #1B1F24;
+    --accent: #C8102E;
+    --focus: #1F5FBF;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151A17; --panel: #1F2622; --ink: #EEF2EF; --muted: #9AA7A0; --line: #34403A;
+      --turf: #24482D; --turf-2: #1F4028; --chalk: #E9EEE8; --block: #F4F7F2; --focus: #7FB0FF;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151A17; --panel: #1F2622; --ink: #EEF2EF; --muted: #9AA7A0; --line: #34403A;
+    --turf: #24482D; --turf-2: #1F4028; --chalk: #E9EEE8; --block: #F4F7F2; --focus: #7FB0FF;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 "Barlow", "Segoe UI", system-ui, sans-serif;
+  }
+  h1, h2, .display { font-family: "Oswald", "Arial Narrow", Impact, sans-serif; letter-spacing: .01em; }
+  h1 { font-size: 1.6rem; margin: 0; line-height: 1.1; }
+  h2 { font-size: 1.05rem; margin: 0 0 .5rem; font-weight: 600; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: .45rem .7rem; cursor: pointer; min-height: 38px;
+  }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 2px;
+  }
+  button.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); font-weight: 600; }
+  button.danger { color: var(--route); }
+  button[disabled] { opacity: .45; cursor: default; }
+  input, select, textarea {
+    width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .45rem .6rem;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin: .6rem 0 .2rem; }
+
+  .app { display: grid; grid-template-columns: 260px minmax(0, 1fr) 280px; gap: 14px; padding: 14px; max-width: 1500px; margin: 0 auto; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .status { font-size: .85rem; color: var(--muted); }
+
+  /* The whiteboard: the field is the one bold element on the page. M. Tembo - 9/28/26 */
+  .board { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .field-wrap { background: var(--turf); border-radius: 10px; padding: 8px; box-shadow: inset 0 0 0 3px var(--turf-2); }
+  svg#field { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .play-title { font-family: "Oswald", "Arial Narrow", sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; margin: 0; word-break: break-word; }
+  .play-sub { color: var(--muted); font-size: .9rem; margin-top: .2rem; }
+
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tools button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .swatch { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+  .hint { font-size: .85rem; color: var(--muted); min-height: 1.3em; }
+
+  .tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+  .tree button { padding: .35rem .4rem; font-size: .9rem; }
+  /* I mark my saved routes with a dashed border so they stand apart from the stock tree. M. Tembo - 9/28/26 */
+  .tree button.mine { border-style: dashed; border-color: var(--muted); }
+  .my-routes { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .my-routes li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .9rem; }
+  .my-routes button { min-height: 32px; padding: .2rem .55rem; font-size: .85rem; }
+
+  .book-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; }
+  .book-list li button {
+    width: 100%; display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; text-align: left; padding: 6px;
+  }
+  .book-list li button[aria-current="true"] { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--accent); }
+  .thumb { width: 64px; height: 48px; border-radius: 4px; background: var(--turf); display: block; }
+  .book-name { font-weight: 600; line-height: 1.2; }
+  .book-meta { font-size: .8rem; color: var(--muted); }
+  .group-head { font-family: "Oswald", "Arial Narrow", sans-serif; font-size: .95rem; color: var(--muted); margin: 10px 0 4px; }
+  .empty { color: var(--muted); font-size: .9rem; padding: 8px 0; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 auto; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); }
+
+  dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); max-width: min(420px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: minmax(0, 1fr) 280px; }
+    .book { grid-column: 1 / -1; order: 3; }
+  }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: minmax(0, 1fr); padding: 10px; gap: 10px; }
+    .book { order: 3; }
+    .play-title { font-size: 1.6rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* I only print the play card: title, field and notes. M. Tembo - 9/28/26 */
+  @media print {
+    body { background: #fff; }
+    .book, .inspector, .tools, .hint, .no-print { display: none !important; }
+    .app { display: block; padding: 0; }
+    .field-wrap { box-shadow: none; }
+    .print-notes { display: block !important; white-space: pre-wrap; margin-top: 10px; }
+  }
+  .print-notes { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Playbook list -->
+  <aside class="panel book" aria-label="Playbook">
+    <header class="top">
+      <h1>Playbook</h1>
+      <span class="status" id="storeStatus">Loading plays</span>
+    </header>
+    <div class="row no-print">
+      <button class="primary" id="btnNew">New play</button>
+    </div>
+    <!-- I back up and restore the playbook between devices with these. M. Tembo - 9/28/26 -->
+    <div class="row no-print" style="margin-top:6px">
+      <button id="btnExportBook">Export playbook</button>
+      <button id="btnImportBook">Import playbook</button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+    <div class="hint" id="bookMsg" aria-live="polite"></div>
+    <label for="search">Find a play</label>
+    <input id="search" type="search" placeholder="Name, formation or concept">
+    <div id="bookList"></div>
+  </aside>
+
+  <!-- Board -->
+  <main class="board">
+    <div>
+      <p class="play-title" id="titleView">Untitled play</p>
+      <div class="play-sub" id="subView"></div>
+    </div>
+
+    <div class="tools" role="toolbar" aria-label="Drawing tools">
+      <button data-tool="move" aria-pressed="true">Move</button>
+      <button data-tool="route" aria-pressed="false"><span class="swatch" style="background:var(--route)"></span>Route</button>
+      <button data-tool="motion" aria-pressed="false"><span class="swatch" style="background:var(--motion)"></span>Motion</button>
+      <button data-tool="block" aria-pressed="false"><span class="swatch" style="background:var(--block)"></span>Block</button>
+      <button data-tool="read" aria-pressed="false">Read order</button>
+      <button data-tool="erase" aria-pressed="false">Erase</button>
+      <button id="btnDone" disabled>Finish line</button>
+      <button id="btnUndo" disabled>Undo</button>
+    </div>
+    <div class="hint" id="hint" aria-live="polite"></div>
+
+    <div class="field-wrap">
+      <svg id="field" viewBox="0 0 53.333 40" role="img" aria-label="Play diagram"></svg>
+    </div>
+    <div class="print-notes" id="printNotes"></div>
+
+    <div class="legend no-print">
+      <span><span class="swatch" style="background:var(--route)"></span>Route</span>
+      <span><span class="swatch" style="background:var(--motion)"></span>Motion (dashed)</span>
+      <span><span class="swatch" style="background:var(--block)"></span>Block</span>
+      <span>Numbers are the QB's read order</span>
+    </div>
+  </main>
+
+  <!-- Inspector -->
+  <aside class="panel inspector" aria-label="Play details">
+    <h2>Play</h2>
+    <label for="fName">Name</label>
+    <input id="fName" placeholder="e.g. Trips Right Stick">
+    <label for="fFormat">Game format</label>
+    <select id="fFormat">
+      <option value="11">11-man tackle</option>
+      <option value="7">7v7</option>
+      <option value="5">5v5 flag</option>
+    </select>
+    <label for="fFormation">Formation</label>
+    <select id="fFormation"></select>
+    <div class="row" style="margin-top:6px">
+      <button id="btnFlip">Flip left/right</button>
+    </div>
+    <!-- I save the current alignment as a formation from here. M. Tembo - 9/28/26 -->
+    <label for="fFormName">Save this alignment as a formation</label>
+    <div class="row">
+      <input id="fFormName" placeholder="e.g. Trey Right" style="flex:2 1 120px">
+      <button id="btnSaveForm" style="flex:1 1 auto">Save formation</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="danger" id="btnRemoveForm" hidden>Remove saved formation</button>
+    </div>
+    <div class="hint" id="formMsg" aria-live="polite"></div>
+    <label for="fConcept">Concept or tags</label>
+    <input id="fConcept" placeholder="e.g. Quick game, red zone">
+    <label for="fNotes">Coaching notes</label>
+    <textarea id="fNotes" placeholder="Reads, landmarks, adjustments"></textarea>
+
+    <h2 style="margin-top:16px">Route tree</h2>
+    <div class="hint" id="treeHint">Select a player to apply a route.</div>
+    <div class="tree" id="tree"></div>
+    <!-- I save a drawn route to the tree from here. M. Tembo - 9/28/26 -->
+    <label for="fRouteName">Save the selected player's route to the tree</label>
+    <div class="row">
+      <input id="fRouteName" placeholder="e.g. Sluggo" style="flex:2 1 120px">
+      <button id="btnSaveRoute" disabled style="flex:1 1 auto">Save route</button>
+    </div>
+    <div class="hint" id="routeMsg" aria-live="polite"></div>
+    <ul class="my-routes" id="myRoutes"></ul>
+
+    <h2 style="margin-top:16px">Save</h2>
+    <div class="row">
+      <button class="primary" id="btnSave">Save play</button>
+      <button id="btnDup">Duplicate</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button id="btnPrint">Print card</button>
+      <button id="btnExport" hidden>Download SVG</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="danger" id="btnDelete" disabled>Delete play</button>
+    </div>
+    <div class="hint" id="saveMsg" aria-live="polite"></div>
+  </aside>
+</div>
+
+<dialog id="confirmDlg">
+  <form method="dialog">
+    <p id="confirmText"></p>
+    <div class="row">
+      <button value="cancel">Keep it</button>
+      <button value="ok" class="danger" id="confirmOk">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/*
+  Offensive Playbook Designer, main script.
+  Coordinates are in yards: x runs 0 to 53.33 across the field, y runs 0 to 40 top to bottom.
+  I put the line of scrimmage at y = 30, so the offense sees 30 yards downfield and 10 behind.
+
+  Version history (newest first)
+  v1.6  9/28/26  M. Tembo  Saved formations with overwrite by name, included in export/import.
+  v1.5  9/28/26  M. Tembo  Playbook export/import as a .json backup file.
+  v1.4  9/28/26  M. Tembo  New double moves and saved custom routes in the route tree.
+  v1.3  9/28/26  M. Tembo  Flip no longer reverses the offensive line.
+  v1.2  9/28/26  M. Tembo  Each player now chains motion, then block, then route.
+  v1.1  9/28/26  M. Tembo  Each player now holds motion plus one route or block.
+  v1.0  9/28/26  M. Tembo  First version.
+*/
+(function () {
+  "use strict";
+
+  const W = 53.333, H = 40, LOS = 30, MID = W / 2;
+  const SNAP = 0.5;
+  const R = 1.0; // player radius in yards
+
+  // ---------- Formations ----------
+  // I describe each player as [label, x offset from the ball, depth behind LOS, shape].
+  // Shape "sq" marks the center. Negative x is the offense's left.
+  const OL = [["LT", -4.4, 1], ["LG", -2.2, 1], ["C", 0, 1, "sq"], ["RG", 2.2, 1], ["RT", 4.4, 1]];
+  const FORMATIONS = {
+    "11": {
+      "Shotgun Doubles": [...OL, ["QB", 0, 5], ["RB", 2, 5.5], ["X", -21, 1], ["H", -12, 2], ["Y", 12, 2], ["Z", 21, 1]],
+      "Trips Right": [...OL, ["QB", 0, 5], ["RB", -2, 5.5], ["X", -21, 1], ["H", 9, 2], ["Y", 14, 2], ["Z", 21, 1]],
+      "I-Form Pro": [...OL, ["QB", 0, 1.8], ["FB", 0, 4.5], ["TB", 0, 7], ["X", -20, 1], ["Y", 6.6, 1], ["Z", 19, 2]],
+      "Singleback Ace": [...OL, ["QB", 0, 1.8], ["RB", 0, 6.5], ["Y", -6.6, 1], ["U", 6.6, 1], ["X", -19, 1], ["Z", 19, 2]],
+      "Empty 3x2": [...OL, ["QB", 0, 5], ["X", -21, 1], ["H", -13, 2], ["Y", 9, 2], ["F", 15, 2], ["Z", 21, 1]],
+      "Pistol Twins": [...OL, ["QB", 0, 3.5], ["RB", 0, 6.5], ["Y", 6.6, 1], ["X", -19, 1], ["H", -13, 2], ["Z", 19, 2]]
+    },
+    "7": {
+      "Spread 2x2": [["C", 0, 1, "sq"], ["QB", 0, 5], ["RB", 2, 5], ["X", -20, 1], ["H", -10, 1.5], ["Y", 10, 1.5], ["Z", 20, 1]],
+      "Trips Right": [["C", 0, 1, "sq"], ["QB", 0, 5], ["RB", -2, 5], ["X", -20, 1], ["H", 8, 1.5], ["Y", 14, 1.5], ["Z", 20, 1]],
+      "Bunch Right": [["C", 0, 1, "sq"], ["QB", 0, 5], ["RB", -2, 5], ["X", -20, 1], ["H", 12, 1], ["Y", 13.5, 2.5], ["Z", 15, 1]],
+      "Empty": [["C", 0, 1, "sq"], ["QB", 0, 5], ["X", -20, 1], ["H", -10, 1.5], ["F", 6, 1.5], ["Y", 12, 1.5], ["Z", 20, 1]]
+    },
+    "5": {
+      "Spread": [["C", 0, 1, "sq"], ["QB", 0, 5], ["X", -16, 1], ["Y", 8, 1.5], ["Z", 16, 1]],
+      "Trips Right": [["C", 0, 1, "sq"], ["QB", 0, 5], ["X", 6, 1.5], ["Y", 11, 1.5], ["Z", 16, 1]],
+      "Stack Left": [["C", 0, 1, "sq"], ["QB", 0, 5], ["X", -12, 1], ["Y", -12, 3.5], ["Z", 14, 1]],
+      "Twins with back": [["C", 0, 1, "sq"], ["QB", 0, 5], ["RB", 2, 5.5], ["X", -14, 1], ["Z", -8, 1.5]]
+    }
+  };
+
+  // ---------- Route tree ----------
+  // Points are [outside yards, downfield yards] relative to the player. I flip "outside" by field side.
+  const TREE = {
+    "Flat": [[3, 1], [9, 2]],
+    "Slant": [[0, 1.5], [-6, 7]],
+    "Hitch": [[0, 5], [-0.5, 4]],
+    "Out": [[0, 10], [6, 10]],
+    "Quick out": [[0, 5], [5, 5]],
+    "Dig": [[0, 12], [-10, 12]],
+    "Curl": [[0, 12], [-1, 10]],
+    "Comeback": [[0, 14], [2, 11]],
+    "Post": [[0, 10], [-7, 20]],
+    "Corner": [[0, 10], [7, 18]],
+    "Go": [[0, 22]],
+    "Wheel": [[4, 1], [8, 4], [8, 18]],
+    "Drag": [[0, 2], [-16, 4]],
+    "Seam": [[0, 20]],
+    "Out n up": [[0, 6], [3, 6], [3.5, 7], [3.5, 20]], // M. Tembo - 9/28/26
+    "Hitch and go": [[0, 5], [-0.5, 4], [0, 5], [0.5, 20]] // M. Tembo - 9/28/26
+  };
+
+  // ---------- State ----------
+  let plays = [];            // saved playbook
+  let myForms = [];             // my saved formations: {id, name, format, players:[[label, dx, depth, shape]]}. M. Tembo - 9/28/26
+  let play = blankPlay("11", "Shotgun Doubles");
+  let savedId = null;        // id of the saved play this board came from
+  let tool = "move";
+  let selected = null;       // selected player id
+  let drawing = null;        // player id whose line I'm adding points to
+  let history = [];
+  let db = null, downloads = null;
+  const LS_KEY = "offense-playbook-v1";
+  const LS_ROUTES = "offense-playbook-routes-v1"; // M. Tembo - 9/28/26
+  const LS_FORMS = "offense-playbook-formations-v1"; // M. Tembo - 9/28/26
+  // One id per format and name, so saving the same name always lands on the same record and overwrites it. M. Tembo - 9/28/26
+  function formId(format, name) { return "f" + format + "-" + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 150); } // M. Tembo - 9/28/26
+  // My saved formations override stock ones with the same name in that format. M. Tembo - 9/28/26
+  function getFormations(format) { // M. Tembo - 9/28/26
+    const out = Object.assign({}, FORMATIONS[format] || {});
+    myForms.filter(f => f.format === format).forEach(f => {
+      Object.keys(out).forEach(k => { if (k.toLowerCase() === f.name.toLowerCase()) delete out[k]; });
+      out[f.name] = f.players;
+    });
+    return out;
+  } // M. Tembo - 9/28/26
+  function isMine(format, name) { return myForms.some(f => f.format === format && f.name.toLowerCase() === (name || "").toLowerCase()); } // M. Tembo - 9/28/26
+  let myRoutes = [];            // my saved routes: {id, name, pts} in [outside, downfield] yards. M. Tembo - 9/28/26
+
+  const $ = (id) => document.getElementById(id);
+  const svg = $("field");
+  const NS = "http://www.w3.org/2000/svg";
+
+  function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function snap(v) { return Math.round(v / SNAP) * SNAP; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  function buildPlayers(format, formation) {
+    const all = getFormations(format); // M. Tembo - 9/28/26
+    const list = all[formation] || Object.values(all)[0]; // M. Tembo - 9/28/26
+    return list.map(([label, dx, depth, shape]) => ({
+      id: uid(), label, x: clamp(MID + dx, 1.5, W - 1.5), y: LOS + depth, shape: shape || "o"
+    }));
+  }
+  function blankPlay(format, formation) {
+    return { id: null, name: "", format, formation, concept: "", notes: "", players: buildPlayers(format, formation), assign: {} };
+  }
+
+  // ---------- History ----------
+  function pushHistory() {
+    history.push(JSON.stringify(play));
+    if (history.length > 60) history.shift();
+    $("btnUndo").disabled = false;
+  }
+  function undo() {
+    if (!history.length) return;
+    play = JSON.parse(history.pop());
+    drawing = null;
+    $("btnUndo").disabled = history.length === 0;
+    syncForm(); render();
+  }
+
+  // ---------- Rendering ----------
+  function el(name, attrs, parent) {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  // I draw into any SVG so the same code makes the board, the thumbnails and the export.
+  function drawPlay(target, p, opts) {
+    opts = opts || {};
+    while (target.firstChild) target.removeChild(target.firstChild);
+    const col = {
+      turf: css("--turf"), chalk: css("--chalk"), route: css("--route"),
+      motion: css("--motion"), block: opts.forExport ? "#1B1F24" : css("--block"), ink: "#1B1F24"
+    };
+    const defs = el("defs", {}, target);
+    const mk = (id, color) => {
+      const m = el("marker", { id, viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "4", markerHeight: "4", orient: "auto-start-reverse" }, defs);
+      el("path", { d: "M0,0 L10,5 L0,10 z", fill: color }, m);
+    };
+    const pre = opts.prefix || "m";
+    mk(pre + "-route", col.route); mk(pre + "-motion", col.motion);
+
+    el("rect", { x: 0, y: 0, width: W, height: H, fill: col.turf }, target);
+    // Yard lines every 5, hashes every yard. I count yard labels from the LOS.
+    for (let y = LOS; y >= 0; y -= 5) {
+      el("line", { x1: 0, x2: W, y1: y, y2: y, stroke: col.chalk, "stroke-width": y === LOS ? 0.25 : 0.12, opacity: y === LOS ? 0.9 : 0.45 }, target);
+      if (!opts.mini && y !== LOS) {
+        const t = el("text", { x: 2, y: y - 0.4, fill: col.chalk, opacity: 0.55, "font-size": 1.3, "font-family": "Oswald, Arial Narrow, sans-serif" }, target);
+        t.textContent = "+" + (LOS - y);
+      }
+    }
+    for (let y = LOS + 5; y <= H; y += 5) el("line", { x1: 0, x2: W, y1: y, y2: y, stroke: col.chalk, "stroke-width": 0.12, opacity: 0.3 }, target);
+    for (let y = 1; y < H; y++) {
+      if (y % 5 === 0) continue;
+      [20, W - 20].forEach(hx => el("line", { x1: hx - 0.5, x2: hx + 0.5, y1: y, y2: y, stroke: col.chalk, "stroke-width": 0.1, opacity: 0.45 }, target));
+    }
+
+    // Assignments first so players sit on top.
+    const byId = {};
+    p.players.forEach(pl => byId[pl.id] = pl);
+    Object.keys(p.assign).forEach(pid => {
+      const a = p.assign[pid], pl = byId[pid];
+      if (!pl) return;
+      // I chain each player's lines: motion, then block, then route. Each one starts where the last ends. M. Tembo - 9/28/26
+      const motion = a.motion || [], block = a.block || [], route = a.points || []; // M. Tembo - 9/28/26
+      const sw = opts.mini ? 0.5 : 0.32;
+      const lastOf = (arr, fb) => arr.length ? arr[arr.length - 1] : fb; // M. Tembo - 9/28/26
+      const mEnd = lastOf(motion, [pl.x, pl.y]); // M. Tembo - 9/28/26
+      const bEnd = lastOf(block, mEnd); // M. Tembo - 9/28/26
+      const line = (from, arr, color, extra) => el("polyline", Object.assign({ points: [from, ...arr].map(q => q.join(",")).join(" "), fill: "none", stroke: color, "stroke-width": sw, "stroke-linejoin": "round", "stroke-linecap": "round" }, extra || {}), target); // M. Tembo - 9/28/26
+      if (motion.length) {
+        const later = block.length || route.length; // M. Tembo - 9/28/26
+        line([pl.x, pl.y], motion, col.motion, later ? { "stroke-dasharray": "0.8 0.6" } : { "stroke-dasharray": "0.8 0.6", "marker-end": "url(#" + pre + "-motion)" }); // M. Tembo - 9/28/26
+        if (later) el("circle", { cx: mEnd[0], cy: mEnd[1], r: opts.mini ? 0.5 : 0.35, fill: col.motion }, target); // M. Tembo - 9/28/26
+      }
+      if (block.length) {
+        line(mEnd, block, col.block); // M. Tembo - 9/28/26
+        // I end a block with a T bar perpendicular to the last segment, even when a release follows.
+        const pts = [mEnd, ...block]; // M. Tembo - 9/28/26
+        const [x1, y1] = pts[pts.length - 2], [x2, y2] = pts[pts.length - 1];
+        const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+        const nx = -(y2 - y1) / len * 0.9, ny = (x2 - x1) / len * 0.9;
+        el("line", { x1: x2 + nx, y1: y2 + ny, x2: x2 - nx, y2: y2 - ny, stroke: col.block, "stroke-width": opts.mini ? 0.5 : 0.36, "stroke-linecap": "round" }, target);
+      }
+      if (route.length) line(bEnd, route, col.route, { "marker-end": "url(#" + pre + "-route)" }); // M. Tembo - 9/28/26
+      if (!opts.mini && opts.handles && pid === selected) {
+        // I give motion, block and route points their own handles so any of them can be dragged. M. Tembo - 9/28/26
+        const handles = (arr, key, color) => arr.forEach((q, i) => el("circle", { cx: q[0], cy: q[1], r: 0.55, fill: color, stroke: col.chalk, "stroke-width": 0.12, "data-handle": pid + ":" + key + ":" + i, style: "cursor:grab" }, target)); // M. Tembo - 9/28/26
+        handles(motion, "m", col.motion); handles(block, "b", col.block); handles(route, "p", col.route); // M. Tembo - 9/28/26
+      }
+    });
+
+    p.players.forEach(pl => {
+      const g = el("g", { "data-player": pl.id, style: opts.mini ? "" : "cursor:pointer" }, target);
+      const isSel = !opts.mini && pl.id === selected;
+      const fill = pl.label === "QB" ? "#1B1F24" : "#FFFFFF";
+      const txt = pl.label === "QB" ? "#FFFFFF" : "#1B1F24";
+      if (pl.shape === "sq") el("rect", { x: pl.x - R, y: pl.y - R, width: R * 2, height: R * 2, rx: 0.2, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g);
+      else el("circle", { cx: pl.x, cy: pl.y, r: R, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g);
+      if (isSel) el("circle", { cx: pl.x, cy: pl.y, r: R + 0.5, fill: "none", stroke: "#FFD447", "stroke-width": 0.22 }, g);
+      if (!opts.mini) {
+        const t = el("text", { x: pl.x, y: pl.y + 0.42, "text-anchor": "middle", "font-size": pl.label.length > 1 ? 0.95 : 1.15, "font-weight": 700, fill: txt, "font-family": "Oswald, Arial Narrow, sans-serif", "pointer-events": "none" }, g);
+        t.textContent = pl.label;
+      }
+      const a = p.assign[pl.id];
+      if (a && a.read && !opts.mini) {
+        const mo = a.motion || []; // M. Tembo - 9/28/26
+        const bl = a.block || []; // M. Tembo - 9/28/26
+        const end = a.points[a.points.length - 1] || bl[bl.length - 1] || mo[mo.length - 1] || [pl.x, pl.y - 2]; // M. Tembo - 9/28/26
+        el("circle", { cx: end[0] + 1.1, cy: end[1] - 1.1, r: 0.8, fill: "#FFD447", stroke: "#1B1F24", "stroke-width": 0.12, "pointer-events": "none" }, target);
+        const t = el("text", { x: end[0] + 1.1, y: end[1] - 0.75, "text-anchor": "middle", "font-size": 1.05, "font-weight": 700, fill: "#1B1F24", "font-family": "Oswald, Arial Narrow, sans-serif", "pointer-events": "none" }, target);
+        t.textContent = a.read;
+      }
+    });
+  }
+
+  function render() {
+    drawPlay(svg, play, { handles: tool === "move" });
+    $("titleView").textContent = play.name || "Untitled play";
+    const fmt = { "11": "11-man", "7": "7v7", "5": "5v5 flag" }[play.format];
+    $("subView").textContent = [fmt, play.formation, play.concept].filter(Boolean).join(", ");
+    $("printNotes").textContent = play.notes || "";
+    $("btnDone").disabled = !drawing;
+    $("btnDelete").disabled = !savedId;
+    renderTree();
+    updateHint();
+  }
+
+  function updateHint() {
+    const sel = play.players.find(p => p.id === selected);
+    const msgs = {
+      move: sel ? "Drag " + sel.label + " or its route points. Tap the field to deselect." : "Drag players into place. Tap a player to select it.",
+      route: drawing ? "Tap the field to add route points for " + labelOf(drawing) + ". It starts where any motion or block ends. Tap the player again or Finish line when done." : "Tap a player, then tap the field to draw its route.", // M. Tembo - 9/28/26
+      motion: drawing ? "Tap to add motion points for " + labelOf(drawing) + ". Then switch to Route or Block and tap the player to draw from the end of the motion." : "Tap a player, then tap where the motion goes.", // M. Tembo - 9/28/26
+      block: drawing ? "Tap where " + labelOf(drawing) + " blocks. To release into a route, switch to Route and tap the player again." : "Tap a player, then tap its block target.", // M. Tembo - 9/28/26
+      read: "Tap receivers in the order the QB reads them. Tap again to clear.",
+      erase: "Tap a player to clear its motion, block and route." // M. Tembo - 9/28/26
+    };
+    $("hint").textContent = msgs[tool];
+  }
+  function labelOf(id) { const p = play.players.find(q => q.id === id); return p ? p.label : ""; }
+
+  // I list the stock tree first, then my saved routes. M. Tembo - 9/28/26
+  function routeStart(pl) { // M. Tembo - 9/28/26
+    const prev = play.assign[pl.id];
+    const mo = prev && prev.motion ? prev.motion : [];
+    const bl = prev && prev.block ? prev.block : [];
+    return bl.length ? bl[bl.length - 1] : mo.length ? mo[mo.length - 1] : [pl.x, pl.y];
+  } // M. Tembo - 9/28/26
+
+  function renderTree() {
+    const box = $("tree");
+    box.innerHTML = "";
+    const sel = play.players.find(p => p.id === selected);
+    $("treeHint").textContent = sel ? "Apply a route to " + sel.label + "." : "Select a player to apply a route.";
+    const add = (name, pts, mine) => { // M. Tembo - 9/28/26
+      const b = document.createElement("button");
+      b.textContent = name;
+      b.disabled = !sel;
+      if (mine) b.className = "mine"; // M. Tembo - 9/28/26
+      b.addEventListener("click", () => applyShape(pts)); // M. Tembo - 9/28/26
+      box.appendChild(b);
+    }; // M. Tembo - 9/28/26
+    Object.keys(TREE).forEach(name => add(name, TREE[name], false)); // M. Tembo - 9/28/26
+    myRoutes.slice().sort((x, y) => x.name.localeCompare(y.name)).forEach(r => add(r.name, r.pts, true)); // M. Tembo - 9/28/26
+    const a = sel && play.assign[sel.id]; // M. Tembo - 9/28/26
+    $("btnSaveRoute").disabled = !(a && a.points && a.points.length); // M. Tembo - 9/28/26
+  }
+
+  function applyShape(shape) { // M. Tembo - 9/28/26
+    const pl = play.players.find(p => p.id === selected);
+    if (!pl) return;
+    pushHistory();
+    const prev = play.assign[pl.id];
+    const mo = prev && prev.motion ? prev.motion : [];
+    const bl = prev && prev.block ? prev.block : [];
+    const [bx, by] = routeStart(pl); // M. Tembo - 9/28/26
+    const out = bx < MID ? -1 : 1; // outside is toward the nearer sideline from where the route starts.
+    const pts = shape.map(([o, d]) => [clamp(snap(bx + o * out), 0.5, W - 0.5), clamp(snap(by - d), 0.5, H - 0.5)]); // M. Tembo - 9/28/26
+    play.assign[pl.id] = { points: pts, motion: mo, block: bl, read: prev ? prev.read : 0 };
+    drawing = null;
+    render();
+  }
+
+  // I save the selected player's drawn route relative to where it starts, in outside/downfield yards,
+  // so it breaks the right way when I apply it to a player on either side. M. Tembo - 9/28/26
+  function lsRoutesSave() { try { localStorage.setItem(LS_ROUTES, JSON.stringify(myRoutes)); return true; } catch (e) { return false; } } // M. Tembo - 9/28/26
+  async function saveRoute() { // M. Tembo - 9/28/26
+    const pl = play.players.find(p => p.id === selected);
+    const a = pl && play.assign[pl.id];
+    const name = $("fRouteName").value.trim();
+    if (!a || !a.points.length) { $("routeMsg").textContent = "Draw a route for a player first."; return; }
+    if (!name) { $("routeMsg").textContent = "Name the route, then save it."; $("fRouteName").focus(); return; }
+    if (TREE[name]) { $("routeMsg").textContent = name + " is already in the stock tree. Pick another name."; return; }
+    const [bx, by] = routeStart(pl);
+    const out = bx < MID ? -1 : 1;
+    const pts = a.points.map(([x, y]) => [Math.round((x - bx) * out * 2) / 2, Math.round((by - y) * 2) / 2]);
+    const existing = myRoutes.find(r => r.name.toLowerCase() === name.toLowerCase());
+    const doc = { id: existing ? existing.id : uid(), name, pts, updatedAt: new Date().toISOString() };
+    if (db) {
+      try { await db.collection("routes").doc(doc.id).set(doc); }
+      catch (e) { $("routeMsg").textContent = "Couldn't save the route. Try again."; return; }
+    } else {
+      myRoutes = myRoutes.filter(r => r.id !== doc.id).concat(doc);
+      if (!lsRoutesSave()) { $("routeMsg").textContent = "Couldn't save in this browser."; return; }
+      renderMyRoutes(); render();
+    }
+    $("routeMsg").textContent = (existing ? "Updated " : "Saved ") + name + " to the route tree.";
+    $("fRouteName").value = "";
+  } // M. Tembo - 9/28/26
+
+  function renderMyRoutes() { // M. Tembo - 9/28/26
+    const ul = $("myRoutes");
+    ul.innerHTML = "";
+    myRoutes.slice().sort((x, y) => x.name.localeCompare(y.name)).forEach(r => {
+      const li = document.createElement("li");
+      const n = document.createElement("span"); n.textContent = r.name;
+      const b = document.createElement("button"); b.textContent = "Remove"; b.className = "danger";
+      b.setAttribute("aria-label", "Remove " + r.name + " from the route tree");
+      b.addEventListener("click", () => confirmThen("Remove the saved route \"" + r.name + "\" from the route tree? Plays that already use it keep their drawing.", "Remove", async () => {
+        if (db) {
+          try { await db.collection("routes").doc(r.id).delete(); } catch (e) { $("routeMsg").textContent = "Couldn't remove it. Try again."; return; }
+        } else {
+          myRoutes = myRoutes.filter(x => x.id !== r.id); lsRoutesSave(); renderMyRoutes(); render();
+        }
+        $("routeMsg").textContent = "Removed " + r.name + ".";
+      }));
+      li.append(n, b); ul.appendChild(li);
+    });
+  } // M. Tembo - 9/28/26
+
+  // ---------- Pointer handling ----------
+  function toField(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return [clamp(p.x, 0.5, W - 0.5), clamp(p.y, 0.5, H - 0.5)];
+  }
+
+  let drag = null;
+  svg.addEventListener("pointerdown", (e) => {
+    const handle = e.target.getAttribute && e.target.getAttribute("data-handle");
+    const g = e.target.closest && e.target.closest("[data-player]");
+    const pid = g ? g.getAttribute("data-player") : null;
+    const [fx, fy] = toField(e);
+
+    if (tool === "move") {
+      if (handle) {
+        const [hp, which, idx] = handle.split(":"); // M. Tembo - 9/28/26
+        pushHistory();
+        drag = { kind: "handle", pid: hp, which, idx: +idx }; // M. Tembo - 9/28/26
+      } else if (pid) {
+        selected = pid;
+        const pl = play.players.find(p => p.id === pid);
+        pushHistory();
+        drag = { kind: "player", pid, ox: fx - pl.x, oy: fy - pl.y, lastX: pl.x, lastY: pl.y, moved: false };
+      } else {
+        selected = null;
+      }
+      svg.setPointerCapture(e.pointerId);
+      render();
+      return;
+    }
+
+    if (tool === "route" || tool === "motion" || tool === "block") {
+      if (pid) {
+        if (drawing === pid) { drawing = null; render(); return; }
+        selected = pid; drawing = pid;
+        pushHistory();
+        // Motion is its own line, so drawing it never wipes the route or block. M. Tembo - 9/28/26
+        const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], read: 0 }); // M. Tembo - 9/28/26
+        normalizeAssign(a); // M. Tembo - 9/28/26
+        render();
+      } else if (drawing) {
+        pushHistory();
+        const a = play.assign[drawing]; // M. Tembo - 9/28/26
+        (tool === "motion" ? a.motion : tool === "block" ? a.block : a.points).push([snap(fx), snap(fy)]); // M. Tembo - 9/28/26
+        render();
+      }
+      return;
+    }
+
+    if (tool === "read" && pid) {
+      pushHistory();
+      const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], read: 0 }); // M. Tembo - 9/28/26
+      const used = Object.values(play.assign).map(x => x.read).filter(Boolean);
+      if (a.read) {
+        const removed = a.read; a.read = 0;
+        Object.values(play.assign).forEach(x => { if (x.read > removed) x.read--; });
+      } else {
+        a.read = (used.length ? Math.max(...used) : 0) + 1;
+      }
+      render();
+      return;
+    }
+
+    if (tool === "erase" && pid) {
+      if (play.assign[pid]) { pushHistory(); delete play.assign[pid]; render(); }
+    }
+  });
+
+  svg.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const [fx, fy] = toField(e);
+    if (drag.kind === "player") {
+      const pl = play.players.find(p => p.id === drag.pid);
+      const nx = clamp(snap(fx - drag.ox), R, W - R), ny = clamp(snap(fy - drag.oy), R, H - R);
+      const dx = nx - pl.x, dy = ny - pl.y;
+      if (!dx && !dy) return;
+      drag.moved = true;
+      pl.x = nx; pl.y = ny;
+      // I carry the route along with the player.
+      const a = play.assign[pl.id];
+      const shift = ([x, y]) => [clamp(x + dx, 0.5, W - 0.5), clamp(y + dy, 0.5, H - 0.5)]; // M. Tembo - 9/28/26
+      if (a) { a.points = a.points.map(shift); a.motion = (a.motion || []).map(shift); a.block = (a.block || []).map(shift); } // M. Tembo - 9/28/26
+    } else {
+      const ha = play.assign[drag.pid]; // M. Tembo - 9/28/26
+      ({ m: ha.motion, b: ha.block, p: ha.points })[drag.which][drag.idx] = [snap(fx), snap(fy)]; // M. Tembo - 9/28/26
+      drag.moved = true;
+    }
+    render();
+  });
+  const endDrag = () => {
+    if (drag && !drag.moved) history.pop(); // a tap without movement is not an undo step
+    $("btnUndo").disabled = history.length === 0;
+    drag = null;
+  };
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  // ---------- Toolbar and form ----------
+  document.querySelectorAll("[data-tool]").forEach(b => b.addEventListener("click", () => {
+    tool = b.dataset.tool;
+    drawing = null;
+    document.querySelectorAll("[data-tool]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    render();
+  }));
+  $("btnDone").addEventListener("click", () => { drawing = null; render(); });
+  $("btnUndo").addEventListener("click", undo);
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); undo(); }
+    if (e.key === "Escape") { drawing = null; render(); }
+  });
+
+  function fillFormations() {
+    const s = $("fFormation");
+    s.innerHTML = "";
+    const all = getFormations(play.format); // M. Tembo - 9/28/26
+    Object.keys(all).forEach(n => { // M. Tembo - 9/28/26
+      const o = document.createElement("option"); o.value = n; o.textContent = n + (isMine(play.format, n) ? " (saved)" : ""); s.appendChild(o); // M. Tembo - 9/28/26
+    });
+    if (!all[play.formation]) { // M. Tembo - 9/28/26
+      const o = document.createElement("option"); o.value = play.formation; o.textContent = play.formation + " (custom)"; s.appendChild(o);
+    }
+    s.value = play.formation;
+    $("btnRemoveForm").hidden = !isMine(play.format, play.formation); // M. Tembo - 9/28/26
+  }
+  function syncForm() {
+    $("fName").value = play.name;
+    $("fFormat").value = play.format;
+    fillFormations();
+    $("fConcept").value = play.concept;
+    $("fNotes").value = play.notes;
+  }
+
+  $("fName").addEventListener("input", e => { play.name = e.target.value; render(); });
+  $("fConcept").addEventListener("input", e => { play.concept = e.target.value; render(); });
+  $("fNotes").addEventListener("input", e => { play.notes = e.target.value; render(); });
+  $("fFormat").addEventListener("change", e => {
+    pushHistory();
+    play.format = e.target.value;
+    play.formation = Object.keys(getFormations(play.format))[0]; // M. Tembo - 9/28/26
+    play.players = buildPlayers(play.format, play.formation);
+    play.assign = {}; selected = null; drawing = null;
+    syncForm(); render();
+  });
+  $("fFormation").addEventListener("change", e => {
+    pushHistory();
+    play.formation = e.target.value;
+    $("btnRemoveForm").hidden = !isMine(play.format, play.formation); // M. Tembo - 9/28/26
+    // I keep assignments by label when the new formation has the same position.
+    const oldAssign = {};
+    play.players.forEach(p => { if (play.assign[p.id]) oldAssign[p.label] = { a: play.assign[p.id], x: p.x, y: p.y }; });
+    play.players = buildPlayers(play.format, play.formation);
+    play.assign = {};
+    play.players.forEach(p => {
+      const o = oldAssign[p.label];
+      if (o) {
+        const dx = p.x - o.x, dy = p.y - o.y;
+        const mv = ([x, y]) => [clamp(x + dx, 0.5, W - 0.5), clamp(y + dy, 0.5, H - 0.5)]; // M. Tembo - 9/28/26
+        play.assign[p.id] = { ...o.a, points: o.a.points.map(mv), motion: (o.a.motion || []).map(mv), block: (o.a.block || []).map(mv) }; // M. Tembo - 9/28/26
+      }
+    });
+    selected = null; drawing = null;
+    render();
+  });
+  $("btnFlip").addEventListener("click", () => {
+    pushHistory();
+    const fx = x => W - x;
+    // I mirror the play, then swap the tackle and guard labels so the line still reads LT, LG, C, RG, RT
+    // from left to right. Their blocks mirror with them, so the man at left tackle takes the mirrored job. M. Tembo - 9/28/26
+    const OL_SWAP = { LT: "RT", RT: "LT", LG: "RG", RG: "LG" }; // M. Tembo - 9/28/26
+    play.players.forEach(p => { p.x = fx(p.x); if (OL_SWAP[p.label]) p.label = OL_SWAP[p.label]; }); // M. Tembo - 9/28/26
+    Object.values(play.assign).forEach(a => { a.points = a.points.map(([x, y]) => [fx(x), y]); a.motion = (a.motion || []).map(([x, y]) => [fx(x), y]); a.block = (a.block || []).map(([x, y]) => [fx(x), y]); }); // M. Tembo - 9/28/26
+    play.formation = play.formation.replace(/Right|Left/, m => m === "Right" ? "Left" : "Right");
+    fillFormations(); render();
+  });
+
+  $("btnNew").addEventListener("click", () => {
+    play = blankPlay(play.format, Object.keys(getFormations(play.format))[0]); // M. Tembo - 9/28/26
+    savedId = null; selected = null; drawing = null; history = []; $("btnUndo").disabled = true;
+    syncForm(); render(); renderBook();
+    $("fName").focus();
+  });
+  $("btnDup").addEventListener("click", () => {
+    play = clone(play);
+    play.id = null; play.name = (play.name || "Untitled play") + " copy";
+    savedId = null;
+    syncForm(); render(); renderBook();
+    msg("Copy ready. Save it to add it to the playbook.");
+  });
+
+  function msg(t) { $("saveMsg").textContent = t; }
+  $("btnSaveRoute").addEventListener("click", saveRoute); // M. Tembo - 9/28/26
+  $("fRouteName").addEventListener("keydown", e => { if (e.key === "Enter") saveRoute(); }); // M. Tembo - 9/28/26
+
+  // I reuse one confirm dialog for every delete, and it always names what is going away. M. Tembo - 9/28/26
+  function confirmThen(text, okLabel, fn) { // M. Tembo - 9/28/26
+    $("confirmText").textContent = text;
+    $("confirmOk").textContent = okLabel;
+    const dlg = $("confirmDlg");
+    dlg.returnValue = "";
+    dlg.onclose = () => { if (dlg.returnValue === "ok") fn(); };
+    dlg.showModal();
+  } // M. Tembo - 9/28/26
+
+  // ---------- Storage ----------
+  // I save plays in the artifact's shared database when it's available, so anyone I share
+  // the playbook with sees the same plays. Otherwise I fall back to this browser.
+  function lsLoad() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch (e) { return []; } }
+  function lsSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(plays)); return true; } catch (e) { return false; } }
+
+  async function savePlay() {
+    if (!play.name.trim()) { msg("Give the play a name, then save."); $("fName").focus(); return; }
+    const id = savedId || uid();
+    const doc = { ...clone(play), id, updatedAt: new Date().toISOString() };
+    if (db) {
+      try {
+        await db.collection("plays").doc(id).set(doc);
+        savedId = id; play.id = id;
+        msg("Saved " + play.name + ".");
+      } catch (e) {
+        msg(e && e.code === "quota_exceeded" ? "The playbook is full. Delete a play to save new ones." : "Couldn't save. Check your connection and try again.");
+        return;
+      }
+    } else {
+      const i = plays.findIndex(p => p.id === id);
+      if (i >= 0) plays[i] = doc; else plays.push(doc);
+      savedId = id; play.id = id;
+      msg(lsSave() ? "Saved " + play.name + " in this browser." : "Couldn't save in this browser.");
+      renderBook();
+    }
+    render();
+  }
+  $("btnSave").addEventListener("click", savePlay);
+
+  $("btnDelete").addEventListener("click", () => {
+    const p = plays.find(x => x.id === savedId);
+    if (!p) return;
+    confirmThen("Delete \"" + (p.name || "Untitled play") + "\" (" + p.formation + ") from the playbook? This can't be undone.", "Delete", async () => { // M. Tembo - 9/28/26
+      if (db) {
+        try { await db.collection("plays").doc(p.id).delete(); } catch (e) { msg("Couldn't delete. Try again."); return; }
+      } else {
+        plays = plays.filter(x => x.id !== p.id); lsSave(); renderBook();
+      }
+      msg("Deleted " + (p.name || "the play") + ".");
+      savedId = null; play.id = null; render();
+    });
+  });
+
+  // Plays saved before v1.1 stored motion as the player's only line; I move it to the motion slot. M. Tembo - 9/28/26
+  function normalize(p) { // M. Tembo - 9/28/26
+    p.assign = p.assign || {}; // M. Tembo - 9/28/26
+    Object.values(p.assign).forEach(normalizeAssign); // M. Tembo - 9/28/26
+    return p; // M. Tembo - 9/28/26
+  } // M. Tembo - 9/28/26
+  // Before v1.2 a block used the route slot with type "block"; I move it to its own slot. M. Tembo - 9/28/26
+  function normalizeAssign(a) { // M. Tembo - 9/28/26
+    if (a.type === "motion") { a.motion = a.points; a.points = []; } // M. Tembo - 9/28/26
+    if (a.type === "block") { a.block = a.points; a.points = []; } // M. Tembo - 9/28/26
+    delete a.type; // M. Tembo - 9/28/26
+    if (!a.motion) a.motion = []; // M. Tembo - 9/28/26
+    if (!a.block) a.block = []; // M. Tembo - 9/28/26
+    if (!a.points) a.points = []; // M. Tembo - 9/28/26
+    return a; // M. Tembo - 9/28/26
+  } // M. Tembo - 9/28/26
+
+  function loadPlay(p) {
+    play = normalize(clone(p)); // M. Tembo - 9/28/26
+    savedId = p.id; selected = null; drawing = null; history = []; $("btnUndo").disabled = true;
+    msg("");
+    syncForm(); render(); renderBook();
+  }
+
+  function renderBook() {
+    const box = $("bookList");
+    box.innerHTML = "";
+    const q = $("search").value.trim().toLowerCase();
+    const list = plays
+      .filter(p => !q || [p.name, p.formation, p.concept].join(" ").toLowerCase().includes(q))
+      .sort((a, b) => (a.formation || "").localeCompare(b.formation || "") || (a.name || "").localeCompare(b.name || ""));
+    if (!plays.length) { box.innerHTML = '<p class="empty">No plays yet. Draw one on the field and save it.</p>'; return; }
+    if (!list.length) { box.innerHTML = '<p class="empty">No plays match that search.</p>'; return; }
+    let group = null, ul = null;
+    list.forEach(p => {
+      if (p.formation !== group) {
+        group = p.formation;
+        const h = document.createElement("div"); h.className = "group-head"; h.textContent = group; box.appendChild(h);
+        ul = document.createElement("ul"); ul.className = "book-list"; box.appendChild(ul);
+      }
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      if (p.id === savedId) b.setAttribute("aria-current", "true");
+      const t = document.createElementNS(NS, "svg");
+      t.setAttribute("viewBox", "0 " + (LOS - 22) + " " + W + " 32");
+      t.setAttribute("class", "thumb");
+      t.setAttribute("aria-hidden", "true");
+      drawPlay(t, normalize(clone(p)), { mini: true, prefix: "t" + p.id }); // M. Tembo - 9/28/26
+      const txt = document.createElement("div");
+      const n = document.createElement("div"); n.className = "book-name"; n.textContent = p.name || "Untitled play";
+      const m = document.createElement("div"); m.className = "book-meta";
+      m.textContent = ({ "11": "11-man", "7": "7v7", "5": "5v5 flag" }[p.format] || "") + (p.concept ? ", " + p.concept : "");
+      txt.append(n, m);
+      b.append(t, txt);
+      b.addEventListener("click", () => loadPlay(p));
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+  $("search").addEventListener("input", renderBook);
+
+  // ---------- Saved formations ----------
+  // I store players relative to the ball, the same way the stock formations are written. M. Tembo - 9/28/26
+  function lsFormsSave() { try { localStorage.setItem(LS_FORMS, JSON.stringify(myForms)); return true; } catch (e) { return false; } } // M. Tembo - 9/28/26
+  function formMsg(t) { $("formMsg").textContent = t; } // M. Tembo - 9/28/26
+
+  async function saveFormation() { // M. Tembo - 9/28/26
+    const name = $("fFormName").value.trim();
+    if (!name) { formMsg("Name the formation, then save it."); $("fFormName").focus(); return; }
+    const id = formId(play.format, name);
+    if (id.length < 3) { formMsg("Use at least one letter or number in the name."); return; }
+    const players = play.players.map(p => [p.label, Math.round((p.x - MID) * 2) / 2, Math.round((p.y - LOS) * 2) / 2, p.shape === "sq" ? "sq" : undefined].filter(v => v !== undefined));
+    const doc = { id, name, format: play.format, players, updatedAt: new Date().toISOString() };
+    // Same name in the same format overwrites: I write to that name's id and clear any stray duplicates.
+    const dupes = myForms.filter(f => f.format === play.format && f.name.toLowerCase() === name.toLowerCase() && f.id !== id);
+    const replacing = myForms.some(f => f.id === id) || dupes.length > 0 || Object.keys(FORMATIONS[play.format]).some(k => k.toLowerCase() === name.toLowerCase());
+    if (db) {
+      try {
+        await db.collection("formations").doc(id).set(doc);
+        for (const d of dupes) await db.collection("formations").doc(d.id).delete();
+      } catch (e) { formMsg("Couldn't save the formation. Try again."); return; }
+      myForms = myForms.filter(f => f.id !== id && !dupes.includes(f)).concat(doc); // the snapshot confirms this shortly
+    } else {
+      myForms = myForms.filter(f => f.id !== id && !dupes.includes(f)).concat(doc);
+      if (!lsFormsSave()) { formMsg("Couldn't save in this browser."); return; }
+    }
+    play.formation = name;
+    fillFormations(); render();
+    formMsg((replacing ? "Overwrote " : "Saved ") + name + " for " + ({ "11": "11-man", "7": "7v7", "5": "5v5 flag" }[play.format]) + ".");
+    $("fFormName").value = "";
+  } // M. Tembo - 9/28/26
+  $("btnSaveForm").addEventListener("click", saveFormation); // M. Tembo - 9/28/26
+  $("fFormName").addEventListener("keydown", e => { if (e.key === "Enter") saveFormation(); }); // M. Tembo - 9/28/26
+
+  $("btnRemoveForm").addEventListener("click", () => { // M. Tembo - 9/28/26
+    const matches = myForms.filter(f => f.format === play.format && f.name.toLowerCase() === play.formation.toLowerCase());
+    if (!matches.length) return;
+    const name = matches[0].name;
+    const fmt = { "11": "11-man", "7": "7v7", "5": "5v5 flag" }[play.format];
+    const stock = Object.keys(FORMATIONS[play.format]).find(k => k.toLowerCase() === name.toLowerCase());
+    confirmThen("Remove the saved formation \"" + name + "\" (" + fmt + ")?" + (stock ? " The stock " + stock + " comes back in its place." : "") + " Plays already drawn from it keep their alignment.", "Remove", async () => {
+      if (db) {
+        try { for (const f of matches) await db.collection("formations").doc(f.id).delete(); } catch (e) { formMsg("Couldn't remove it. Try again."); return; }
+      }
+      myForms = myForms.filter(f => !matches.includes(f));
+      if (!db) lsFormsSave();
+      fillFormations(); render();
+      formMsg("Removed " + name + ".");
+    });
+  }); // M. Tembo - 9/28/26
+
+  // ---------- Export and import ----------
+  // I export plays and my saved routes together in one .json file. Importing merges by play id:
+  // new plays are added, and a play already in the book is replaced only when the file's copy is newer. M. Tembo - 9/28/26
+  const EXPORT_APP = "offense-playbook"; // M. Tembo - 9/28/26
+  function bookMsg(t) { $("bookMsg").textContent = t; } // M. Tembo - 9/28/26
+
+  $("btnExportBook").addEventListener("click", async () => { // M. Tembo - 9/28/26
+    if (!plays.length && !myRoutes.length && !myForms.length) { bookMsg("Nothing to export yet. Save a play first."); return; }
+    const now = new Date();
+    const stamp = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+    const data = JSON.stringify({ app: EXPORT_APP, version: 1, exportedAt: now.toISOString(), plays, routes: myRoutes, formations: myForms }, null, 2); // M. Tembo - 9/28/26
+    const filename = "playbook-" + stamp + ".json";
+    const blob = new Blob([data], { type: "application/json" });
+    const counts = plays.length + " plays, " + myForms.length + " saved formations and " + myRoutes.length + " saved routes"; // M. Tembo - 9/28/26
+    if (downloads) {
+      try {
+        const r = await downloads.save({ filename, data: blob });
+        if (r && r.status === "saved") bookMsg("Exported " + counts + " to " + filename + ".");
+      } catch (e) { bookMsg("Export didn't finish. Try again."); }
+      return;
+    }
+    // Opened as a local file there's no downloads capability, so I use a plain browser download.
+    try {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      bookMsg("Exported " + counts + " to " + filename + ".");
+    } catch (e) { bookMsg("This browser blocked the download."); }
+  }); // M. Tembo - 9/28/26
+
+  $("btnImportBook").addEventListener("click", () => { $("importFile").value = ""; $("importFile").click(); }); // M. Tembo - 9/28/26
+  $("importFile").addEventListener("change", async (e) => { // M. Tembo - 9/28/26
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    let parsed;
+    try { parsed = JSON.parse(await file.text()); } catch (err) { bookMsg(file.name + " isn't a playbook export file."); return; }
+    if (!parsed || parsed.app !== EXPORT_APP || !Array.isArray(parsed.plays)) { bookMsg(file.name + " isn't a playbook export file."); return; }
+    const inPlays = parsed.plays.filter(p => p && p.id && Array.isArray(p.players)).map(p => normalize(clone(p)));
+    const inForms = (Array.isArray(parsed.formations) ? parsed.formations : []).filter(f => f && f.name && f.format && Array.isArray(f.players)).map(f => ({ ...f, id: formId(f.format, f.name) })); // M. Tembo - 9/28/26
+    const haveF = {}; myForms.forEach(f => haveF[f.id] = f); // M. Tembo - 9/28/26
+    const formWrites = inForms.filter(f => !haveF[f.id] || (f.updatedAt || "") > (haveF[f.id].updatedAt || "")); // M. Tembo - 9/28/26
+    const inRoutes = (Array.isArray(parsed.routes) ? parsed.routes : []).filter(r => r && r.id && r.name && Array.isArray(r.pts));
+    const have = {}; plays.forEach(p => have[p.id] = p);
+    const newer = (a, b) => (a.updatedAt || "") > (b.updatedAt || "");
+    const addPlays = inPlays.filter(p => !have[p.id]);
+    const replacePlays = inPlays.filter(p => have[p.id] && newer(p, have[p.id]));
+    const haveR = {}; myRoutes.forEach(r => haveR[r.id] = r);
+    const routeWrites = inRoutes.filter(r => !haveR[r.id] || newer(r, haveR[r.id]));
+    if (!addPlays.length && !replacePlays.length && !routeWrites.length && !formWrites.length) { bookMsg("Everything in " + file.name + " is already in this playbook."); return; }
+    const run = async () => {
+      let failed = 0;
+      if (db) {
+        // One write at a time so I stay inside the store's rate limits.
+        for (const p of [...addPlays, ...replacePlays]) { try { await db.collection("plays").doc(p.id).set(p); } catch (err) { failed++; } }
+        for (const r of routeWrites) { try { await db.collection("routes").doc(r.id).set(r); } catch (err) { failed++; } }
+        for (const f of formWrites) { try { await db.collection("formations").doc(f.id).set(f); } catch (err) { failed++; } } // M. Tembo - 9/28/26
+      } else {
+        const byId = {}; plays.forEach(p => byId[p.id] = p); [...addPlays, ...replacePlays].forEach(p => byId[p.id] = p);
+        plays = Object.values(byId);
+        const rById = {}; myRoutes.forEach(r => rById[r.id] = r); routeWrites.forEach(r => rById[r.id] = r);
+        myRoutes = Object.values(rById);
+        const fById = {}; myForms.forEach(f => fById[f.id] = f); formWrites.forEach(f => fById[f.id] = f); // M. Tembo - 9/28/26
+        myForms = Object.values(fById); // M. Tembo - 9/28/26
+        if (!lsSave() || !lsRoutesSave() || !lsFormsSave()) failed++; // M. Tembo - 9/28/26
+        fillFormations(); // M. Tembo - 9/28/26
+        renderBook(); renderMyRoutes(); render();
+      }
+      bookMsg("Imported " + addPlays.length + " new plays, updated " + replacePlays.length + ", " + formWrites.length + " saved formations and " + routeWrites.length + " saved routes." + (failed ? " " + failed + " couldn't be saved; import the file again to retry." : ""));
+    };
+    if (replacePlays.length) {
+      // I confirm before overwriting anything and name the plays that will change.
+      const names = replacePlays.map(p => p.name || "Untitled play");
+      confirmThen("Replace " + replacePlays.length + " play(s) with the newer copies from " + file.name + ": " + names.slice(0, 8).join(", ") + (names.length > 8 ? ", and " + (names.length - 8) + " more" : "") + "? " + addPlays.length + " new plays will also be added.", "Replace", run);
+    } else {
+      run();
+    }
+  }); // M. Tembo - 9/28/26
+
+  // ---------- Print and export ----------
+  $("btnPrint").addEventListener("click", () => window.print());
+
+  function exportSvg() {
+    const out = document.createElementNS(NS, "svg");
+    out.setAttribute("xmlns", NS);
+    out.setAttribute("viewBox", "0 0 " + W + " " + H);
+    out.setAttribute("width", "1066"); out.setAttribute("height", "800");
+    const saved = selected; selected = null;
+    drawPlay(out, play, { forExport: true, prefix: "x" });
+    selected = saved;
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(out);
+  }
+  $("btnExport").addEventListener("click", async () => {
+    if (!downloads) return;
+    const name = (play.name || "play").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") || "play";
+    try {
+      const r = await downloads.save({ filename: name + ".svg", data: new Blob([exportSvg()], { type: "image/svg+xml" }) });
+      if (r && r.status === "saved") msg("Downloaded " + name + ".svg.");
+    } catch (e) {
+      if (e && e.code === "unavailable") $("btnExport").hidden = true;
+    }
+  });
+
+  // ---------- Startup ----------
+  syncForm(); render();
+
+  async function connect() {
+    const c = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+    if (c) {
+      try { db = await c.use("db"); } catch (e) { db = null; }
+      try { downloads = await c.use("downloads"); } catch (e) { downloads = null; }
+    }
+    if (downloads) $("btnExport").hidden = false;
+    if (db) {
+      $("storeStatus").textContent = "Synced";
+      db.collection("plays").onSnapshot(
+        (qs) => { plays = qs.docs.map(d => ({ ...d.data(), id: d.id })); renderBook(); },
+        () => { $("storeStatus").textContent = "Offline"; }
+      );
+      db.collection("formations").onSnapshot( // M. Tembo - 9/28/26
+        (qs) => { myForms = qs.docs.map(d => ({ ...d.data(), id: d.id })).filter(f => f.name && f.format && Array.isArray(f.players)); fillFormations(); render(); }, // M. Tembo - 9/28/26
+        () => {} // M. Tembo - 9/28/26
+      ); // M. Tembo - 9/28/26
+      db.collection("routes").onSnapshot( // M. Tembo - 9/28/26
+        (qs) => { myRoutes = qs.docs.map(d => ({ ...d.data(), id: d.id })).filter(r => r.name && Array.isArray(r.pts)); renderMyRoutes(); render(); }, // M. Tembo - 9/28/26
+        () => {} // M. Tembo - 9/28/26
+      ); // M. Tembo - 9/28/26
+    } else {
+      plays = lsLoad();
+      try { myRoutes = JSON.parse(localStorage.getItem(LS_ROUTES) || "[]"); } catch (e) { myRoutes = []; } // M. Tembo - 9/28/26
+      try { myForms = JSON.parse(localStorage.getItem(LS_FORMS) || "[]"); } catch (e) { myForms = []; } // M. Tembo - 9/28/26
+      fillFormations(); // M. Tembo - 9/28/26
+      renderMyRoutes(); render(); // M. Tembo - 9/28/26
+      $("storeStatus").textContent = "Saved in this browser";
+      renderBook();
+    }
+  }
+  connect();
+})();
+</script>
+</body>
+</html>
