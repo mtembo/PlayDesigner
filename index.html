@@ -4,6 +4,11 @@
   I built this to draw, save and print offensive plays for 11-man, 7v7 and 5v5 flag.
 
   Version history (newest first)
+  v1.7  9/30/26  M. Tembo  Free draw: I drag a line by hand onto a player (route, run path, motion or block)
+                           or anywhere on the field as a loose mark (including a toss pitch). QB drops
+                           (quick game, 3, 5 and 7 step, play action). Run game: A, B, C and D gap runs and
+                           toss to either side. Blocking schemes: inside zone, outside zone, power, counter,
+                           trap, draw, RB screen, pass pro and slide pro. Added Zig in and Zig out routes.
   v1.6  9/28/26  M. Tembo  Saved formations: I line players up, name it and save it. Saving a name that
                            already exists in that game format overwrites it, stock formations included.
                            Saved formations sync and ride along in export/import.
@@ -41,6 +46,7 @@
     --route: #C8102E;
     --motion: #1F5FBF;
     --block: #1B1F24;
+    --drop: #B45309; /* QB drop and pitch color. M. Tembo - 9/30/26 */
     --accent: #C8102E;
     --focus: #1F5FBF;
     box-sizing: border-box;
@@ -52,12 +58,14 @@
     :root:not([data-theme="light"]) {
       --bg: #151A17; --panel: #1F2622; --ink: #EEF2EF; --muted: #9AA7A0; --line: #34403A;
       --turf: #24482D; --turf-2: #1F4028; --chalk: #E9EEE8; --block: #F4F7F2; --focus: #7FB0FF;
+      --drop: #F59E0B; /* M. Tembo - 9/30/26 */
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #151A17; --panel: #1F2622; --ink: #EEF2EF; --muted: #9AA7A0; --line: #34403A;
     --turf: #24482D; --turf-2: #1F4028; --chalk: #E9EEE8; --block: #F4F7F2; --focus: #7FB0FF;
+    --drop: #F59E0B; /* M. Tembo - 9/30/26 */
     color-scheme: dark;
   }
   *, *::before, *::after { box-sizing: inherit; }
@@ -108,6 +116,14 @@
   .tree button { padding: .35rem .4rem; font-size: .9rem; }
   /* I mark my saved routes with a dashed border so they stand apart from the stock tree. M. Tembo - 9/28/26 */
   .tree button.mine { border-style: dashed; border-color: var(--muted); }
+  /* Play side toggle and the free draw picker. M. Tembo - 9/30/26 */
+  .seg { display: flex; gap: 0; }
+  .seg button { flex: 1 1 0; border-radius: 0; }
+  .seg button:first-child { border-radius: 6px 0 0 6px; }
+  .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
+  .seg button[aria-pressed="true"], .tree button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .tools select { width: auto; min-height: 38px; padding: .3rem .5rem; }
+  .sub-head { font-size: .85rem; color: var(--muted); margin: .7rem 0 .3rem; } /* M. Tembo - 9/30/26 */
   .my-routes { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
   .my-routes li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .9rem; }
   .my-routes button { min-height: 32px; padding: .2rem .55rem; font-size: .85rem; }
@@ -187,6 +203,15 @@
       <button data-tool="route" aria-pressed="false"><span class="swatch" style="background:var(--route)"></span>Route</button>
       <button data-tool="motion" aria-pressed="false"><span class="swatch" style="background:var(--motion)"></span>Motion</button>
       <button data-tool="block" aria-pressed="false"><span class="swatch" style="background:var(--block)"></span>Block</button>
+      <!-- I drag a line by hand with Free draw; the picker says what kind of line it is. M. Tembo - 9/30/26 -->
+      <button data-tool="free" aria-pressed="false">Free draw</button>
+      <select id="drawAs" aria-label="Free draw line type">
+        <option value="route">as Route</option>
+        <option value="run">as Run path</option>
+        <option value="motion">as Motion</option>
+        <option value="block">as Block</option>
+        <option value="pitch">as Pitch (loose mark)</option>
+      </select>
       <button data-tool="read" aria-pressed="false">Read order</button>
       <button data-tool="erase" aria-pressed="false">Erase</button>
       <button id="btnDone" disabled>Finish line</button>
@@ -203,6 +228,8 @@
       <span><span class="swatch" style="background:var(--route)"></span>Route</span>
       <span><span class="swatch" style="background:var(--motion)"></span>Motion (dashed)</span>
       <span><span class="swatch" style="background:var(--block)"></span>Block</span>
+      <span><span class="swatch" style="background:var(--drop)"></span>QB drop and pitch</span> <!-- M. Tembo - 9/30/26 -->
+      <span><span class="swatch" style="background:var(--route);height:5px"></span>Ball carrier</span> <!-- M. Tembo - 9/30/26 -->
       <span>Numbers are the QB's read order</span>
     </div>
   </main>
@@ -250,6 +277,37 @@
     <div class="hint" id="routeMsg" aria-live="polite"></div>
     <ul class="my-routes" id="myRoutes"></ul>
 
+    <!-- QB drops, run game and blocking schemes. M. Tembo - 9/30/26 -->
+    <h2 style="margin-top:16px">QB drop</h2>
+    <div class="hint" id="dropHint"></div>
+    <div class="tree" id="dropBtns">
+      <button data-drop="quick">Quick game</button>
+      <button data-drop="3">3 step</button>
+      <button data-drop="5">5 step</button>
+      <button data-drop="7">7 step</button>
+      <button data-drop="pa">Play action</button>
+      <button data-drop="clear">Clear drop</button>
+    </div>
+
+    <h2 style="margin-top:16px">Run game and blocking</h2>
+    <div class="sub-head">Play side</div>
+    <div class="seg" role="group" aria-label="Play side">
+      <button data-side="-1" aria-pressed="false">Left</button>
+      <button data-side="1" aria-pressed="true">Right</button>
+    </div>
+    <div class="hint" id="runHint"></div>
+    <div class="sub-head">Run to a gap</div>
+    <div class="tree" id="runBtns">
+      <button data-run="A">A gap</button>
+      <button data-run="B">B gap</button>
+      <button data-run="C">C gap</button>
+      <button data-run="D">D gap</button>
+      <button data-run="toss">Toss</button>
+    </div>
+    <div class="sub-head">Blocking scheme</div>
+    <div class="tree" id="schemeBtns"></div>
+    <div class="hint" id="schemeMsg" aria-live="polite"></div>
+
     <h2 style="margin-top:16px">Save</h2>
     <div class="row">
       <button class="primary" id="btnSave">Save play</button>
@@ -283,6 +341,8 @@
   I put the line of scrimmage at y = 30, so the offense sees 30 yards downfield and 10 behind.
 
   Version history (newest first)
+  v1.7  9/30/26  M. Tembo  Free draw tool and loose marks, QB drops, gap runs and toss, blocking schemes,
+                           Zig in and Zig out. Each player now chains motion, drop, block, then route.
   v1.6  9/28/26  M. Tembo  Saved formations with overwrite by name, included in export/import.
   v1.5  9/28/26  M. Tembo  Playbook export/import as a .json backup file.
   v1.4  9/28/26  M. Tembo  New double moves and saved custom routes in the route tree.
@@ -343,7 +403,9 @@
     "Drag": [[0, 2], [-16, 4]],
     "Seam": [[0, 20]],
     "Out n up": [[0, 6], [3, 6], [3.5, 7], [3.5, 20]], // M. Tembo - 9/28/26
-    "Hitch and go": [[0, 5], [-0.5, 4], [0, 5], [0.5, 20]] // M. Tembo - 9/28/26
+    "Hitch and go": [[0, 5], [-0.5, 4], [0, 5], [0.5, 20]], // M. Tembo - 9/28/26
+    "Zig in": [[2, 4], [3, 6], [-5, 6.5]], // I stem outside, plant and snap back inside. M. Tembo - 9/30/26
+    "Zig out": [[-2, 4], [-3, 6], [5, 6.5]] // I stem inside, plant and snap back outside. M. Tembo - 9/30/26
   };
 
   // ---------- State ----------
@@ -371,6 +433,9 @@
     return out;
   } // M. Tembo - 9/28/26
   function isMine(format, name) { return myForms.some(f => f.format === format && f.name.toLowerCase() === (name || "").toLowerCase()); } // M. Tembo - 9/28/26
+  let freeDraw = null;          // the hand-drawn stroke in progress: {pid, kind, pts}. M. Tembo - 9/30/26
+  let side = 1;                 // play side for runs and schemes: 1 is the offense's right, -1 its left. M. Tembo - 9/30/26
+  const OL_LABELS = ["LT", "LG", "C", "RG", "RT"]; // M. Tembo - 9/30/26
   let myRoutes = [];            // my saved routes: {id, name, pts} in [outside, downfield] yards. M. Tembo - 9/28/26
 
   const $ = (id) => document.getElementById(id);
@@ -390,7 +455,7 @@
     }));
   }
   function blankPlay(format, formation) {
-    return { id: null, name: "", format, formation, concept: "", notes: "", players: buildPlayers(format, formation), assign: {} };
+    return { id: null, name: "", format, formation, concept: "", notes: "", players: buildPlayers(format, formation), assign: {}, marks: [] }; // M. Tembo - 9/30/26
   }
 
   // ---------- History ----------
@@ -423,7 +488,8 @@
     while (target.firstChild) target.removeChild(target.firstChild);
     const col = {
       turf: css("--turf"), chalk: css("--chalk"), route: css("--route"),
-      motion: css("--motion"), block: opts.forExport ? "#1B1F24" : css("--block"), ink: "#1B1F24"
+      motion: css("--motion"), block: opts.forExport ? "#1B1F24" : css("--block"), ink: "#1B1F24",
+      drop: css("--drop") // M. Tembo - 9/30/26
     };
     const defs = el("defs", {}, target);
     const mk = (id, color) => {
@@ -431,7 +497,7 @@
       el("path", { d: "M0,0 L10,5 L0,10 z", fill: color }, m);
     };
     const pre = opts.prefix || "m";
-    mk(pre + "-route", col.route); mk(pre + "-motion", col.motion);
+    mk(pre + "-route", col.route); mk(pre + "-motion", col.motion); mk(pre + "-drop", col.drop); // M. Tembo - 9/30/26
 
     el("rect", { x: 0, y: 0, width: W, height: H, fill: col.turf }, target);
     // Yard lines every 5, hashes every yard. I count yard labels from the LOS.
@@ -448,6 +514,27 @@
       [20, W - 20].forEach(hx => el("line", { x1: hx - 0.5, x2: hx + 0.5, y1: y, y2: y, stroke: col.chalk, "stroke-width": 0.1, opacity: 0.45 }, target));
     }
 
+    // I end a block with a T bar perpendicular to the last segment, even when a release follows. M. Tembo - 9/30/26
+    const tBar = (pts, sw) => { // M. Tembo - 9/30/26
+      const [x1, y1] = pts[pts.length - 2], [x2, y2] = pts[pts.length - 1];
+      const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+      const nx = -(y2 - y1) / len * 0.9, ny = (x2 - x1) / len * 0.9;
+      el("line", { x1: x2 + nx, y1: y2 + ny, x2: x2 - nx, y2: y2 - ny, stroke: col.block, "stroke-width": sw, "stroke-linecap": "round" }, target);
+    }; // M. Tembo - 9/30/26
+
+    // Loose marks go under the players, and in erase mode each one gets a wide invisible hit line. M. Tembo - 9/30/26
+    (p.marks || []).forEach(mk2 => { // M. Tembo - 9/30/26
+      if (!mk2.pts || mk2.pts.length < 2) return;
+      const sw = opts.mini ? 0.5 : (mk2.kind === "run" ? 0.55 : 0.32);
+      const pts = mk2.pts.map(q => q.join(",")).join(" ");
+      const base = { points: pts, fill: "none", "stroke-width": sw, "stroke-linejoin": "round", "stroke-linecap": "round" };
+      if (mk2.kind === "block") { el("polyline", Object.assign(base, { stroke: col.block }), target); tBar(mk2.pts, opts.mini ? 0.5 : 0.36); }
+      else if (mk2.kind === "motion") el("polyline", Object.assign(base, { stroke: col.motion, "stroke-dasharray": "0.8 0.6", "marker-end": "url(#" + pre + "-motion)" }), target);
+      else if (mk2.kind === "pitch") el("polyline", Object.assign(base, { stroke: col.drop, "stroke-dasharray": "0.5 0.5", "marker-end": "url(#" + pre + "-drop)" }), target);
+      else el("polyline", Object.assign(base, { stroke: col.route, "marker-end": "url(#" + pre + "-route)" }), target);
+      if (!opts.mini && !opts.forExport && tool === "erase") el("polyline", { points: pts, fill: "none", stroke: "transparent", "stroke-width": 1.6, "pointer-events": "stroke", "data-mark": mk2.id, style: "cursor:pointer" }, target);
+    }); // M. Tembo - 9/30/26
+
     // Assignments first so players sit on top.
     const byId = {};
     p.players.forEach(pl => byId[pl.id] = pl);
@@ -456,30 +543,41 @@
       if (!pl) return;
       // I chain each player's lines: motion, then block, then route. Each one starts where the last ends. M. Tembo - 9/28/26
       const motion = a.motion || [], block = a.block || [], route = a.points || []; // M. Tembo - 9/28/26
+      const drop = a.drop || []; // M. Tembo - 9/30/26
       const sw = opts.mini ? 0.5 : 0.32;
       const lastOf = (arr, fb) => arr.length ? arr[arr.length - 1] : fb; // M. Tembo - 9/28/26
       const mEnd = lastOf(motion, [pl.x, pl.y]); // M. Tembo - 9/28/26
-      const bEnd = lastOf(block, mEnd); // M. Tembo - 9/28/26
+      const dEnd = lastOf(drop, mEnd); // M. Tembo - 9/30/26
+      const bEnd = lastOf(block, dEnd); // M. Tembo - 9/30/26
       const line = (from, arr, color, extra) => el("polyline", Object.assign({ points: [from, ...arr].map(q => q.join(",")).join(" "), fill: "none", stroke: color, "stroke-width": sw, "stroke-linejoin": "round", "stroke-linecap": "round" }, extra || {}), target); // M. Tembo - 9/28/26
       if (motion.length) {
-        const later = block.length || route.length; // M. Tembo - 9/28/26
+        const later = drop.length || block.length || route.length; // M. Tembo - 9/30/26
         line([pl.x, pl.y], motion, col.motion, later ? { "stroke-dasharray": "0.8 0.6" } : { "stroke-dasharray": "0.8 0.6", "marker-end": "url(#" + pre + "-motion)" }); // M. Tembo - 9/28/26
         if (later) el("circle", { cx: mEnd[0], cy: mEnd[1], r: opts.mini ? 0.5 : 0.35, fill: col.motion }, target); // M. Tembo - 9/28/26
       }
+      if (drop.length) { // M. Tembo - 9/30/26
+        // I draw the QB's drop with a tick for each step and a dot at the set point. M. Tembo - 9/30/26
+        line(mEnd, drop, col.drop); // M. Tembo - 9/30/26
+        const steps = a.dropSteps || 0; // M. Tembo - 9/30/26
+        if (steps > 1 && !opts.mini) { // M. Tembo - 9/30/26
+          const [sx, sy] = mEnd, [ex, ey] = drop[drop.length - 1];
+          const len = Math.hypot(ex - sx, ey - sy) || 1, nx = -(ey - sy) / len * 0.45, ny = (ex - sx) / len * 0.45;
+          for (let k = 1; k < steps; k++) {
+            const tx = sx + (ex - sx) * k / steps, ty = sy + (ey - sy) * k / steps;
+            el("line", { x1: tx + nx, y1: ty + ny, x2: tx - nx, y2: ty - ny, stroke: col.drop, "stroke-width": 0.16 }, target);
+          }
+        } // M. Tembo - 9/30/26
+        el("circle", { cx: dEnd[0], cy: dEnd[1], r: opts.mini ? 0.5 : 0.4, fill: col.drop }, target); // M. Tembo - 9/30/26
+      } // M. Tembo - 9/30/26
       if (block.length) {
-        line(mEnd, block, col.block); // M. Tembo - 9/28/26
-        // I end a block with a T bar perpendicular to the last segment, even when a release follows.
-        const pts = [mEnd, ...block]; // M. Tembo - 9/28/26
-        const [x1, y1] = pts[pts.length - 2], [x2, y2] = pts[pts.length - 1];
-        const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-        const nx = -(y2 - y1) / len * 0.9, ny = (x2 - x1) / len * 0.9;
-        el("line", { x1: x2 + nx, y1: y2 + ny, x2: x2 - nx, y2: y2 - ny, stroke: col.block, "stroke-width": opts.mini ? 0.5 : 0.36, "stroke-linecap": "round" }, target);
+        line(dEnd, block, col.block); // M. Tembo - 9/30/26
+        tBar([dEnd, ...block], opts.mini ? 0.5 : 0.36); // M. Tembo - 9/30/26
       }
-      if (route.length) line(bEnd, route, col.route, { "marker-end": "url(#" + pre + "-route)" }); // M. Tembo - 9/28/26
+      if (route.length) line(bEnd, route, col.route, { "marker-end": "url(#" + pre + "-route)", "stroke-width": a.carry ? (opts.mini ? 0.8 : 0.55) : sw }); // a ball carrier's path is drawn heavier. M. Tembo - 9/30/26
       if (!opts.mini && opts.handles && pid === selected) {
         // I give motion, block and route points their own handles so any of them can be dragged. M. Tembo - 9/28/26
         const handles = (arr, key, color) => arr.forEach((q, i) => el("circle", { cx: q[0], cy: q[1], r: 0.55, fill: color, stroke: col.chalk, "stroke-width": 0.12, "data-handle": pid + ":" + key + ":" + i, style: "cursor:grab" }, target)); // M. Tembo - 9/28/26
-        handles(motion, "m", col.motion); handles(block, "b", col.block); handles(route, "p", col.route); // M. Tembo - 9/28/26
+        handles(motion, "m", col.motion); handles(drop, "d", col.drop); handles(block, "b", col.block); handles(route, "p", col.route); // M. Tembo - 9/30/26
       }
     });
 
@@ -499,7 +597,8 @@
       if (a && a.read && !opts.mini) {
         const mo = a.motion || []; // M. Tembo - 9/28/26
         const bl = a.block || []; // M. Tembo - 9/28/26
-        const end = a.points[a.points.length - 1] || bl[bl.length - 1] || mo[mo.length - 1] || [pl.x, pl.y - 2]; // M. Tembo - 9/28/26
+        const dr = a.drop || []; // M. Tembo - 9/30/26
+        const end = a.points[a.points.length - 1] || bl[bl.length - 1] || dr[dr.length - 1] || mo[mo.length - 1] || [pl.x, pl.y - 2]; // M. Tembo - 9/30/26
         el("circle", { cx: end[0] + 1.1, cy: end[1] - 1.1, r: 0.8, fill: "#FFD447", stroke: "#1B1F24", "stroke-width": 0.12, "pointer-events": "none" }, target);
         const t = el("text", { x: end[0] + 1.1, y: end[1] - 0.75, "text-anchor": "middle", "font-size": 1.05, "font-weight": 700, fill: "#1B1F24", "font-family": "Oswald, Arial Narrow, sans-serif", "pointer-events": "none" }, target);
         t.textContent = a.read;
@@ -516,6 +615,7 @@
     $("btnDone").disabled = !drawing;
     $("btnDelete").disabled = !savedId;
     renderTree();
+    renderPlaybookTools(); // M. Tembo - 9/30/26
     updateHint();
   }
 
@@ -527,7 +627,8 @@
       motion: drawing ? "Tap to add motion points for " + labelOf(drawing) + ". Then switch to Route or Block and tap the player to draw from the end of the motion." : "Tap a player, then tap where the motion goes.", // M. Tembo - 9/28/26
       block: drawing ? "Tap where " + labelOf(drawing) + " blocks. To release into a route, switch to Route and tap the player again." : "Tap a player, then tap its block target.", // M. Tembo - 9/28/26
       read: "Tap receivers in the order the QB reads them. Tap again to clear.",
-      erase: "Tap a player to clear its motion, block and route." // M. Tembo - 9/28/26
+      free: "Drag from a player to hand-draw its " + $("drawAs").selectedOptions[0].textContent.replace(/^as /, "").toLowerCase() + " (it replaces that line). Drag from open field for a loose mark.", // M. Tembo - 9/30/26
+      erase: "Tap a player to clear its motion, drop, block and route, or tap a loose mark to remove it." // M. Tembo - 9/30/26
     };
     $("hint").textContent = msgs[tool];
   }
@@ -538,7 +639,8 @@
     const prev = play.assign[pl.id];
     const mo = prev && prev.motion ? prev.motion : [];
     const bl = prev && prev.block ? prev.block : [];
-    return bl.length ? bl[bl.length - 1] : mo.length ? mo[mo.length - 1] : [pl.x, pl.y];
+    const dr = prev && prev.drop ? prev.drop : []; // M. Tembo - 9/30/26
+    return bl.length ? bl[bl.length - 1] : dr.length ? dr[dr.length - 1] : mo.length ? mo[mo.length - 1] : [pl.x, pl.y]; // M. Tembo - 9/30/26
   } // M. Tembo - 9/28/26
 
   function renderTree() {
@@ -570,7 +672,7 @@
     const [bx, by] = routeStart(pl); // M. Tembo - 9/28/26
     const out = bx < MID ? -1 : 1; // outside is toward the nearer sideline from where the route starts.
     const pts = shape.map(([o, d]) => [clamp(snap(bx + o * out), 0.5, W - 0.5), clamp(snap(by - d), 0.5, H - 0.5)]); // M. Tembo - 9/28/26
-    play.assign[pl.id] = { points: pts, motion: mo, block: bl, read: prev ? prev.read : 0 };
+    play.assign[pl.id] = { points: pts, motion: mo, block: bl, drop: prev && prev.drop ? prev.drop : [], dropSteps: prev ? prev.dropSteps || 0 : 0, carry: false, read: prev ? prev.read : 0 }; // M. Tembo - 9/30/26
     drawing = null;
     render();
   }
@@ -633,6 +735,7 @@
   let drag = null;
   svg.addEventListener("pointerdown", (e) => {
     const handle = e.target.getAttribute && e.target.getAttribute("data-handle");
+    const markId = e.target.getAttribute && e.target.getAttribute("data-mark"); // M. Tembo - 9/30/26
     const g = e.target.closest && e.target.closest("[data-player]");
     const pid = g ? g.getAttribute("data-player") : null;
     const [fx, fy] = toField(e);
@@ -655,13 +758,44 @@
       return;
     }
 
+    if (tool === "free") { // M. Tembo - 9/30/26
+      // I collect the stroke as the pointer moves and tidy it up when I let go. M. Tembo - 9/30/26
+      pushHistory();
+      const kind = $("drawAs").value;
+      if (pid && kind !== "pitch") {
+        const pl = play.players.find(p => p.id === pid);
+        const a = assignOf(pl);
+        selected = pid;
+        const slot = kind === "motion" ? "motion" : kind === "block" ? "block" : "points";
+        // When I redraw motion or a block, whatever follows it starts from the new end point. M. Tembo - 9/30/26
+        const start = slot === "motion" ? [pl.x, pl.y] : slot === "block" ? lastPt(a.drop, lastPt(a.motion, [pl.x, pl.y])) : routeStart(pl);
+        a[slot] = [];
+        if (slot === "points") a.carry = kind === "run";
+        freeDraw = { pid, slot, start, pts: a[slot] };
+      } else {
+        const mk2 = { id: uid(), kind, pts: [[r1(fx), r1(fy)]] };
+        play.marks.push(mk2);
+        freeDraw = { pid: null, mark: mk2, start: mk2.pts[0], pts: mk2.pts };
+      }
+      svg.setPointerCapture(e.pointerId);
+      render();
+      return;
+    } // M. Tembo - 9/30/26
+
+    if (tool === "erase" && markId) { // M. Tembo - 9/30/26
+      pushHistory();
+      play.marks = play.marks.filter(m => m.id !== markId);
+      render();
+      return;
+    } // M. Tembo - 9/30/26
+
     if (tool === "route" || tool === "motion" || tool === "block") {
       if (pid) {
         if (drawing === pid) { drawing = null; render(); return; }
         selected = pid; drawing = pid;
         pushHistory();
         // Motion is its own line, so drawing it never wipes the route or block. M. Tembo - 9/28/26
-        const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], read: 0 }); // M. Tembo - 9/28/26
+        const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], drop: [], read: 0 }); // M. Tembo - 9/30/26
         normalizeAssign(a); // M. Tembo - 9/28/26
         render();
       } else if (drawing) {
@@ -675,7 +809,7 @@
 
     if (tool === "read" && pid) {
       pushHistory();
-      const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], read: 0 }); // M. Tembo - 9/28/26
+      const a = play.assign[pid] || (play.assign[pid] = { points: [], motion: [], block: [], drop: [], read: 0 }); // M. Tembo - 9/30/26
       const used = Object.values(play.assign).map(x => x.read).filter(Boolean);
       if (a.read) {
         const removed = a.read; a.read = 0;
@@ -693,6 +827,12 @@
   });
 
   svg.addEventListener("pointermove", (e) => {
+    if (freeDraw) { // M. Tembo - 9/30/26
+      const [fx, fy] = toField(e);
+      const last = freeDraw.pts.length ? freeDraw.pts[freeDraw.pts.length - 1] : freeDraw.start;
+      if (Math.hypot(fx - last[0], fy - last[1]) >= 0.4) { freeDraw.pts.push([r1(fx), r1(fy)]); render(); }
+      return;
+    } // M. Tembo - 9/30/26
     if (!drag) return;
     const [fx, fy] = toField(e);
     if (drag.kind === "player") {
@@ -705,15 +845,16 @@
       // I carry the route along with the player.
       const a = play.assign[pl.id];
       const shift = ([x, y]) => [clamp(x + dx, 0.5, W - 0.5), clamp(y + dy, 0.5, H - 0.5)]; // M. Tembo - 9/28/26
-      if (a) { a.points = a.points.map(shift); a.motion = (a.motion || []).map(shift); a.block = (a.block || []).map(shift); } // M. Tembo - 9/28/26
+      if (a) { a.points = a.points.map(shift); a.motion = (a.motion || []).map(shift); a.block = (a.block || []).map(shift); a.drop = (a.drop || []).map(shift); } // M. Tembo - 9/30/26
     } else {
       const ha = play.assign[drag.pid]; // M. Tembo - 9/28/26
-      ({ m: ha.motion, b: ha.block, p: ha.points })[drag.which][drag.idx] = [snap(fx), snap(fy)]; // M. Tembo - 9/28/26
+      ({ m: ha.motion, d: ha.drop, b: ha.block, p: ha.points })[drag.which][drag.idx] = [snap(fx), snap(fy)]; // M. Tembo - 9/30/26
       drag.moved = true;
     }
     render();
   });
   const endDrag = () => {
+    if (freeDraw) { finishFreeDraw(); return; } // M. Tembo - 9/30/26
     if (drag && !drag.moved) history.pop(); // a tap without movement is not an undo step
     $("btnUndo").disabled = history.length === 0;
     drag = null;
@@ -728,6 +869,11 @@
     document.querySelectorAll("[data-tool]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
     render();
   }));
+  $("drawAs").addEventListener("change", () => { // M. Tembo - 9/30/26
+    tool = "free"; drawing = null; // picking a line type puts me straight into Free draw. M. Tembo - 9/30/26
+    document.querySelectorAll("[data-tool]").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "free" ? "true" : "false")); // M. Tembo - 9/30/26
+    render(); // M. Tembo - 9/30/26
+  }); // M. Tembo - 9/30/26
   $("btnDone").addEventListener("click", () => { drawing = null; render(); });
   $("btnUndo").addEventListener("click", undo);
   document.addEventListener("keydown", (e) => {
@@ -781,7 +927,7 @@
       if (o) {
         const dx = p.x - o.x, dy = p.y - o.y;
         const mv = ([x, y]) => [clamp(x + dx, 0.5, W - 0.5), clamp(y + dy, 0.5, H - 0.5)]; // M. Tembo - 9/28/26
-        play.assign[p.id] = { ...o.a, points: o.a.points.map(mv), motion: (o.a.motion || []).map(mv), block: (o.a.block || []).map(mv) }; // M. Tembo - 9/28/26
+        play.assign[p.id] = { ...o.a, points: o.a.points.map(mv), motion: (o.a.motion || []).map(mv), block: (o.a.block || []).map(mv), drop: (o.a.drop || []).map(mv) }; // M. Tembo - 9/30/26
       }
     });
     selected = null; drawing = null;
@@ -794,7 +940,9 @@
     // from left to right. Their blocks mirror with them, so the man at left tackle takes the mirrored job. M. Tembo - 9/28/26
     const OL_SWAP = { LT: "RT", RT: "LT", LG: "RG", RG: "LG" }; // M. Tembo - 9/28/26
     play.players.forEach(p => { p.x = fx(p.x); if (OL_SWAP[p.label]) p.label = OL_SWAP[p.label]; }); // M. Tembo - 9/28/26
-    Object.values(play.assign).forEach(a => { a.points = a.points.map(([x, y]) => [fx(x), y]); a.motion = (a.motion || []).map(([x, y]) => [fx(x), y]); a.block = (a.block || []).map(([x, y]) => [fx(x), y]); }); // M. Tembo - 9/28/26
+    Object.values(play.assign).forEach(a => { a.points = a.points.map(([x, y]) => [fx(x), y]); a.motion = (a.motion || []).map(([x, y]) => [fx(x), y]); a.block = (a.block || []).map(([x, y]) => [fx(x), y]); a.drop = (a.drop || []).map(([x, y]) => [fx(x), y]); }); // M. Tembo - 9/30/26
+    (play.marks || []).forEach(m => { m.pts = m.pts.map(([x, y]) => [fx(x), y]); }); // M. Tembo - 9/30/26
+    setSide(-side); // the play side flips with the play. M. Tembo - 9/30/26
     play.formation = play.formation.replace(/Right|Left/, m => m === "Right" ? "Left" : "Right");
     fillFormations(); render();
   });
@@ -874,6 +1022,7 @@
   // Plays saved before v1.1 stored motion as the player's only line; I move it to the motion slot. M. Tembo - 9/28/26
   function normalize(p) { // M. Tembo - 9/28/26
     p.assign = p.assign || {}; // M. Tembo - 9/28/26
+    if (!Array.isArray(p.marks)) p.marks = []; // plays saved before v1.7 have no loose marks. M. Tembo - 9/30/26
     Object.values(p.assign).forEach(normalizeAssign); // M. Tembo - 9/28/26
     return p; // M. Tembo - 9/28/26
   } // M. Tembo - 9/28/26
@@ -885,13 +1034,14 @@
     if (!a.motion) a.motion = []; // M. Tembo - 9/28/26
     if (!a.block) a.block = []; // M. Tembo - 9/28/26
     if (!a.points) a.points = []; // M. Tembo - 9/28/26
+    if (!a.drop) a.drop = []; // M. Tembo - 9/30/26
     return a; // M. Tembo - 9/28/26
   } // M. Tembo - 9/28/26
 
   function loadPlay(p) {
     play = normalize(clone(p)); // M. Tembo - 9/28/26
     savedId = p.id; selected = null; drawing = null; history = []; $("btnUndo").disabled = true;
-    msg("");
+    msg(""); $("schemeMsg").textContent = ""; // M. Tembo - 9/30/26
     syncForm(); render(); renderBook();
   }
 
@@ -930,6 +1080,252 @@
     });
   }
   $("search").addEventListener("input", renderBook);
+
+  // ---------- Free draw, QB drops, run game and blocking schemes ----------
+  // I added all of this in v1.7. Coordinates follow the rest of the file: y gets smaller going downfield,
+  // and side = 1 means the play goes to the offense's right. M. Tembo - 9/30/26
+  function r1(v) { return Math.round(v * 10) / 10; } // M. Tembo - 9/30/26
+  function P(x, y) { return [clamp(r1(x), 0.5, W - 0.5), clamp(r1(y), 0.5, H - 0.5)]; } // M. Tembo - 9/30/26
+  function lastPt(arr, fb) { return arr && arr.length ? arr[arr.length - 1] : fb; } // M. Tembo - 9/30/26
+  function assignOf(pl) { return normalizeAssign(play.assign[pl.id] || (play.assign[pl.id] = { points: [], motion: [], block: [], drop: [], read: 0 })); } // M. Tembo - 9/30/26
+  function byLabel(l) { return play.players.find(p => p.label === l); } // M. Tembo - 9/30/26
+  function startOf(pl) { return lastPt((play.assign[pl.id] || {}).motion, [pl.x, pl.y]); } // where a player is at the snap. M. Tembo - 9/30/26
+
+  // I thin a hand-drawn stroke with Ramer-Douglas-Peucker so it keeps its shape with only a few handles. M. Tembo - 9/30/26
+  function simplify(pts, eps) { // M. Tembo - 9/30/26
+    if (pts.length < 3) return pts.slice();
+    const [ax, ay] = pts[0], [bx, by] = pts[pts.length - 1];
+    const len = Math.hypot(bx - ax, by - ay) || 1;
+    let dmax = 0, idx = 0;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = Math.abs((bx - ax) * (ay - pts[i][1]) - (ax - pts[i][0]) * (by - ay)) / len;
+      if (d > dmax) { dmax = d; idx = i; }
+    }
+    if (dmax <= eps) return [pts[0], pts[pts.length - 1]];
+    return simplify(pts.slice(0, idx + 1), eps).slice(0, -1).concat(simplify(pts.slice(idx), eps));
+  } // M. Tembo - 9/30/26
+
+  function finishFreeDraw() { // M. Tembo - 9/30/26
+    const fd = freeDraw; freeDraw = null;
+    const raw = fd.pid ? [fd.start, ...fd.pts] : fd.pts;
+    if (raw.length < 2) {
+      // A tap with no drag isn't a line, so I put things back the way they were.
+      play = JSON.parse(history.pop());
+      $("btnUndo").disabled = history.length === 0;
+      render(); return;
+    }
+    const clean = simplify(raw, 0.25).map(([x, y]) => P(x, y));
+    if (fd.pid) play.assign[fd.pid][fd.slot] = clean.slice(1);
+    else fd.mark.pts = clean;
+    $("btnUndo").disabled = false;
+    render();
+  } // M. Tembo - 9/30/26
+
+  // Gap spots come from where my linemen actually line up, so a moved guard moves the gap with him. M. Tembo - 9/30/26
+  function lineX() { // M. Tembo - 9/30/26
+    const c = byLabel("C"), bx = c ? c.x : MID;
+    const x = (l, dx) => { const p = byLabel(l); return p ? p.x : bx + dx; };
+    return { C: bx, LG: x("LG", -2.2), RG: x("RG", 2.2), LT: x("LT", -4.4), RT: x("RT", 4.4) };
+  } // M. Tembo - 9/30/26
+  // A playside tight end is any non-lineman on the line within a few yards outside the tackle. M. Tembo - 9/30/26
+  function playsideTE(dir) { // M. Tembo - 9/30/26
+    const t = dir > 0 ? lineX().RT : lineX().LT;
+    return play.players.find(p => !OL_LABELS.includes(p.label) && p.label !== "QB" && p.y <= LOS + 1.6 && (p.x - t) * dir > 1 && (p.x - t) * dir < 4) || null;
+  } // M. Tembo - 9/30/26
+  function gapX(gap, dir) { // M. Tembo - 9/30/26
+    const L = lineX(), g = dir > 0 ? L.RG : L.LG, t = dir > 0 ? L.RT : L.LT, te = playsideTE(dir);
+    if (gap === "A") return (L.C + g) / 2;
+    if (gap === "B") return (g + t) / 2;
+    if (gap === "C") return te ? (t + te.x) / 2 : t + 1.2 * dir;
+    return te ? te.x + 1.5 * dir : t + 3.4 * dir; // D gap
+  } // M. Tembo - 9/30/26
+  function hasLine() { return OL_LABELS.every(l => byLabel(l)); } // M. Tembo - 9/30/26
+
+  // The ball carrier is the selected player when that's a back or receiver, otherwise the first back I find. M. Tembo - 9/30/26
+  function carrier() { // M. Tembo - 9/30/26
+    const sel = play.players.find(p => p.id === selected);
+    if (sel && !OL_LABELS.includes(sel.label) && sel.label !== "QB") return sel;
+    for (const l of ["TB", "RB", "FB", "F", "H"]) { const p = byLabel(l); if (p) return p; }
+    return null;
+  } // M. Tembo - 9/30/26
+  function fullback(c) { const fb = byLabel("FB"); return fb && fb !== c ? fb : null; } // M. Tembo - 9/30/26
+
+  function setRun(pl, pts) { const a = assignOf(pl); a.block = []; a.drop = []; a.dropSteps = 0; a.points = pts; a.carry = true; } // M. Tembo - 9/30/26
+  function setBlock(pl, pts) { const a = assignOf(pl); a.block = pts; a.points = []; a.drop = []; a.carry = false; } // M. Tembo - 9/30/26
+  function clearPitch() { play.marks = (play.marks || []).filter(m => m.tag !== "pitch"); } // M. Tembo - 9/30/26
+
+  // On a handoff I show the QB opening to the mesh with the carrier. M. Tembo - 9/30/26
+  function qbMesh(c, toX) { // M. Tembo - 9/30/26
+    const qb = byLabel("QB");
+    if (!qb || qb === c) return;
+    const [qx, qy] = startOf(qb), s = Math.sign(toX - qx) || side;
+    const a = assignOf(qb);
+    a.drop = [qy - LOS < 3 ? P(qx + 1.2 * s, LOS + 3) : P(qx + 0.7 * s, qy + 0.3)];
+    a.dropSteps = 0; a.block = []; a.points = []; a.carry = false;
+  } // M. Tembo - 9/30/26
+
+  // QB drops. Under center the set point is measured from the line; in the gun I add depth to his alignment. M. Tembo - 9/30/26
+  function applyDrop(kind) { // M. Tembo - 9/30/26
+    const qb = byLabel("QB");
+    if (!qb) return;
+    pushHistory();
+    const a = assignOf(qb), [qx, qy] = startOf(qb), under = qy - LOS < 3;
+    if (kind === "clear") { a.drop = []; a.dropSteps = 0; render(); return; }
+    if (kind === "pa") {
+      // Play action: I open to the play side, show the fake at the mesh, then finish at the set point.
+      a.drop = under ? [P(qx + 1.6 * side, LOS + 3.2), P(qx + 2.2 * side, LOS + 7)] : [P(qx + 1 * side, qy + 0.3), P(qx + 1.2 * side, qy + 2.5)];
+      a.dropSteps = 0;
+    } else {
+      const depth = under ? { quick: 3, "3": 5, "5": 7, "7": 9 }[kind] : qy - LOS + { quick: 0.5, "3": 1.5, "5": 3, "7": 4.5 }[kind];
+      a.drop = [P(qx, LOS + depth)];
+      a.dropSteps = { quick: 1, "3": 3, "5": 5, "7": 7 }[kind];
+    }
+    if (a.carry) { a.points = []; a.carry = false; }
+    render();
+  } // M. Tembo - 9/30/26
+
+  function applyRun(gap) { // M. Tembo - 9/30/26
+    const c = carrier();
+    if (!c) return;
+    pushHistory();
+    clearPitch();
+    const [sx, sy] = startOf(c), d = side;
+    if (gap === "toss") {
+      // Toss: the QB opens and pitches, the carrier catches it moving wide and turns up outside the D gap.
+      const dx = gapX("D", d), catchPt = P(sx + 3 * d, sy + 0.3);
+      setRun(c, [catchPt, P(dx + 2 * d, LOS + 1.5), P(dx + 2.5 * d, LOS - 5)]);
+      const qb = byLabel("QB");
+      if (qb && qb !== c) {
+        const [qx, qy] = startOf(qb), qa = assignOf(qb);
+        qa.drop = [qy - LOS < 3 ? P(qx + 0.8 * d, LOS + 2.6) : P(qx + 0.5 * d, qy + 0.3)];
+        qa.dropSteps = 0; qa.block = []; qa.points = []; qa.carry = false;
+        play.marks.push({ id: uid(), kind: "pitch", tag: "pitch", pts: [qa.drop[0], catchPt] });
+      }
+    } else {
+      const gx = gapX(gap, d);
+      setRun(c, [P(gx, LOS + 1.3), P(gx, LOS - 5)]);
+      qbMesh(c, gx);
+    }
+    $("schemeMsg").textContent = (gap === "toss" ? "Toss " : gap + " gap ") + (d > 0 ? "right" : "left") + " for " + c.label + ".";
+    render();
+  } // M. Tembo - 9/30/26
+
+  // ---------- Blocking schemes ----------
+  // Each scheme sets the five linemen and, when it's a run, the carrier and the QB's mesh.
+  // ps = play side, bs = back side. I keep any motion that's already drawn. M. Tembo - 9/30/26
+  const SCHEMES = { // M. Tembo - 9/30/26
+    "Inside zone": (ol, d, k) => {
+      OL_LABELS.forEach(l => setBlock(ol[l], [P(ol[l].x + 1.6 * d, LOS - 1.2)]));
+      k.run(k.L[d > 0 ? "RG" : "LG"]);
+    },
+    "Outside zone": (ol, d, k) => {
+      OL_LABELS.forEach(l => setBlock(ol[l], [P(ol[l].x + 2.6 * d, LOS - 0.8)]));
+      const cg = gapX("C", d);
+      k.run(cg + 1 * d, [P(cg + 1.5 * d, LOS + 1.6), P(cg + 1 * d, LOS - 5)]);
+    },
+    "Power": (ol, d, k) => {
+      [k.ps.T, k.ps.G, "C"].forEach(l => setBlock(ol[l], k.down(ol[l])));
+      const hole = gapX("B", d);
+      setBlock(ol[k.bs.G], k.pull(ol[k.bs.G], hole, LOS - 3)); // backside guard pulls and leads up through the hole
+      setBlock(ol[k.bs.T], k.hinge(ol[k.bs.T]));
+      const fb = fullback(k.c);
+      if (fb) { setBlock(fb, [P(gapX("D", d) - 0.5 * d, LOS - 0.2)]); assignOf(fb).sb = true; } // fullback kicks out the end man; sb marks it as scheme-drawn
+      k.run(hole);
+    },
+    "Counter": (ol, d, k) => {
+      [k.ps.T, k.ps.G, "C"].forEach(l => setBlock(ol[l], k.down(ol[l])));
+      const kick = gapX("D", d) - 0.5 * d, hole = gapX("C", d);
+      setBlock(ol[k.bs.G], k.pull(ol[k.bs.G], kick, LOS - 0.2)); // the guard kicks out
+      setBlock(ol[k.bs.T], [P(ol[k.bs.T].x, LOS + 3.8), P(hole, LOS + 3.8), P(hole, LOS - 3.5)]); // the tackle wraps up through the hole
+      const [sx, sy] = startOf(k.c);
+      k.run(hole, [P(sx - 1.2 * d, sy), P(hole, LOS + 1.3), P(hole, LOS - 5)]); // counter step away first
+    },
+    "Trap": (ol, d, k) => {
+      setBlock(ol.C, [P(ol.C.x - 1.6 * d, LOS - 1.2)]); // center blocks back
+      setBlock(ol[k.ps.G], [P(ol[k.ps.G].x - 0.6 * d, LOS - 4)]); // playside guard climbs to the backer
+      setBlock(ol[k.ps.T], [P(ol[k.ps.T].x - 0.4 * d, LOS - 4.5)]); // playside tackle climbs
+      const pg = ol[k.ps.G].x;
+      setBlock(ol[k.bs.G], [P(ol[k.bs.G].x, LOS + 2.8), P(pg - 0.6 * d, LOS + 2.4), P(pg, LOS - 0.2)]); // backside guard traps the first man past center
+      setBlock(ol[k.bs.T], [P(ol[k.bs.T].x + 1.4 * d, LOS - 1)]); // backside tackle fills for the puller
+      k.run(gapX("A", d));
+    },
+    "Draw": (ol, d, k) => {
+      OL_LABELS.forEach(l => setBlock(ol[l], k.set(ol[l])));
+      const ax = gapX("A", d), [sx, sy] = startOf(k.c);
+      k.run(ax, [P(sx, sy - 0.5), P(ax, LOS + 1.3), P(ax, LOS - 5)]);
+      const qb = byLabel("QB");
+      if (qb && qb !== k.c) { const [qx, qy] = startOf(qb), qa = assignOf(qb); qa.drop = [qy - LOS < 3 ? P(qx, LOS + 4.5) : P(qx, qy + 1)]; qa.dropSteps = 0; } // QB shows pass, then hands it off
+    },
+    "RB screen": (ol, d, k) => {
+      setBlock(ol[k.bs.G], k.set(ol[k.bs.G])); setBlock(ol[k.bs.T], k.set(ol[k.bs.T]));
+      const sx0 = ol[k.ps.T].x + 5 * d;
+      setBlock(ol.C, [P(ol.C.x, LOS + 2.6), P(sx0 + 1 * d, LOS - 0.8)]); // set, then release to the convoy
+      setBlock(ol[k.ps.G], [P(ol[k.ps.G].x, LOS + 2.6), P(sx0 + 3 * d, LOS - 1.6)]);
+      setBlock(ol[k.ps.T], [P(ol[k.ps.T].x, LOS + 2.6), P(sx0 + 5 * d, LOS - 0.5)]);
+      const [cx, cy] = startOf(k.c), ca = assignOf(k.c);
+      ca.block = []; ca.drop = []; ca.carry = false;
+      ca.points = [P(cx, cy - 0.8), P(sx0, LOS + 2.5)]; // the back sells the block, then slips to the flat
+      const qb = byLabel("QB");
+      if (qb && qb !== k.c) { const [qx, qy] = startOf(qb), qa = assignOf(qb); qa.drop = [qy - LOS < 3 ? P(qx - 0.6 * d, LOS + 8) : P(qx - 0.4 * d, qy + 2.5)]; qa.dropSteps = 0; qa.points = []; qa.carry = false; } // QB drifts deep to pull the rush
+    },
+    "Pass pro": (ol, d, k) => {
+      OL_LABELS.forEach(l => setBlock(ol[l], k.set(ol[l]))); // big on big, everyone sets
+    },
+    "Slide pro": (ol, d, k) => {
+      OL_LABELS.forEach(l => setBlock(ol[l], [P(ol[l].x + 1.2 * d, LOS + 2.8)])); // the whole line slides to the play side
+    }
+  }; // M. Tembo - 9/30/26
+  const NO_CARRIER = ["RB screen", "Pass pro", "Slide pro"]; // schemes that don't hand the ball off. M. Tembo - 9/30/26
+
+  function applyScheme(name) { // M. Tembo - 9/30/26
+    if (!hasLine()) return;
+    const c = carrier();
+    if (!c && name !== "Pass pro" && name !== "Slide pro") { $("schemeMsg").textContent = name + " needs a back. Add one or select the ball carrier."; return; }
+    pushHistory();
+    if (!NO_CARRIER.includes(name)) clearPitch();
+    // A back's block that a previous scheme drew goes away so schemes don't stack up. M. Tembo - 9/30/26
+    Object.values(play.assign).forEach(a => { if (a.sb) { a.block = []; delete a.sb; } }); // M. Tembo - 9/30/26
+    const d = side, ol = {};
+    OL_LABELS.forEach(l => ol[l] = byLabel(l));
+    const k = {
+      c, L: lineX(),
+      ps: { G: d > 0 ? "RG" : "LG", T: d > 0 ? "RT" : "LT" },
+      bs: { G: d > 0 ? "LG" : "RG", T: d > 0 ? "LT" : "RT" },
+      down: p => [P(p.x - 1.6 * d, LOS - 1.2)],
+      hinge: p => [P(p.x - 1 * d, LOS + 2.8)],
+      set: p => [P(p.x + 0.6 * Math.sign(p.x - ol.C.x), LOS + 3)],
+      pull: (p, toX, endY) => [P(p.x, LOS + 3), P(toX, LOS + 3), P(toX, endY)],
+      run: (aimX, pts) => { setRun(c, pts || [P(aimX, LOS + 1.3), P(aimX, LOS - 5)]); qbMesh(c, aimX); }
+    };
+    SCHEMES[name](ol, d, k);
+    $("schemeMsg").textContent = name + " " + (d > 0 ? "right" : "left") + (c && !["Pass pro", "Slide pro"].includes(name) ? ", " + c.label + (name === "RB screen" ? " on the screen." : " carries.") : ".");
+    if (!play.concept) { play.concept = name + (d > 0 ? " right" : " left"); $("fConcept").value = play.concept; }
+    render();
+  } // M. Tembo - 9/30/26
+
+  function setSide(s) { // M. Tembo - 9/30/26
+    side = s;
+    document.querySelectorAll("[data-side]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.side === side ? "true" : "false"));
+  } // M. Tembo - 9/30/26
+
+  // I enable each button only when the play has the players it needs, and say who it will use. M. Tembo - 9/30/26
+  function renderPlaybookTools() { // M. Tembo - 9/30/26
+    const qb = byLabel("QB"), c = carrier(), line = hasLine();
+    document.querySelectorAll("[data-drop]").forEach(b => b.disabled = !qb);
+    $("dropHint").textContent = qb ? (startOf(qb)[1] - LOS < 3 ? "QB is under center. Play action opens to the play side below." : "QB is in the gun. Play action opens to the play side below.") : "This formation has no QB.";
+    document.querySelectorAll("[data-run]").forEach(b => b.disabled = !c);
+    $("runHint").textContent = c ? "Ball carrier: " + c.label + ". Select a different player to change it." : "Add a back, or select the player who carries the ball.";
+    document.querySelectorAll("#schemeBtns button").forEach(b => b.disabled = !line);
+    if (!line && !$("schemeMsg").textContent) $("schemeMsg").textContent = "Blocking schemes need all five linemen (11-man formations).";
+  } // M. Tembo - 9/30/26
+
+  (function buildSchemeButtons() { // M. Tembo - 9/30/26
+    const box = $("schemeBtns");
+    Object.keys(SCHEMES).forEach(n => { const b = document.createElement("button"); b.textContent = n; b.addEventListener("click", () => applyScheme(n)); box.appendChild(b); });
+  })(); // M. Tembo - 9/30/26
+  document.querySelectorAll("[data-drop]").forEach(b => b.addEventListener("click", () => applyDrop(b.dataset.drop))); // M. Tembo - 9/30/26
+  document.querySelectorAll("[data-run]").forEach(b => b.addEventListener("click", () => applyRun(b.dataset.run))); // M. Tembo - 9/30/26
+  document.querySelectorAll("[data-side]").forEach(b => b.addEventListener("click", () => { setSide(+b.dataset.side); render(); })); // M. Tembo - 9/30/26
 
   // ---------- Saved formations ----------
   // I store players relative to the ball, the same way the stock formations are written. M. Tembo - 9/28/26
