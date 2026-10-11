@@ -1,0 +1,1954 @@
+{
+ "app": "offense-playbook",
+ "version": 1,
+ "updatedAt": "2026-10-11T11:44:10.774Z",
+ "plays": [
+  {
+   "id": "hmww7n1j6zuo",
+   "name": "60 Angle Motion Flat Semi H-Out",
+   "format": "11",
+   "formation": "Spread H LOS",
+   "concept": "Pass pro right",
+   "notes": "",
+   "players": [
+    {
+     "id": "b9eb1lo5cwts",
+     "label": "LT",
+     "x": 22.2665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "ee8hdrakcwts",
+     "label": "LG",
+     "x": 24.4665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "vveu5zotcwts",
+     "label": "C",
+     "x": 26.6665,
+     "y": 31,
+     "shape": "sq"
+    },
+    {
+     "id": "nue414f9cwts",
+     "label": "RG",
+     "x": 28.8665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "ywb2iiv1cwts",
+     "label": "RT",
+     "x": 31.066499999999998,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "t6e2n164cwts",
+     "label": "QB",
+     "x": 26.6665,
+     "y": 35,
+     "shape": "o"
+    },
+    {
+     "id": "1937gznbcwts",
+     "label": "RB",
+     "x": 31,
+     "y": 35,
+     "shape": "o"
+    },
+    {
+     "id": "hn5gb0btcwts",
+     "label": "X",
+     "x": 5.5,
+     "y": 32.5,
+     "shape": "o"
+    },
+    {
+     "id": "m51xofbfcwts",
+     "label": "H",
+     "x": 14.5,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "fiw3hwpicwts",
+     "label": "Y",
+     "x": 38.6665,
+     "y": 32,
+     "shape": "o"
+    },
+    {
+     "id": "t3cz9y3zcwts",
+     "label": "Z",
+     "x": 43.5,
+     "y": 31.5,
+     "shape": "o"
+    }
+   ],
+   "assign": {
+    "fiw3hwpicwts": {
+     "points": [
+      [
+       38.5,
+       21
+      ],
+      [
+       37.5,
+       19
+      ],
+      [
+       44.5,
+       15
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "read": 2,
+     "drop": []
+    },
+    "t3cz9y3zcwts": {
+     "points": [
+      [
+       43.5,
+       19.5
+      ],
+      [
+       33.5,
+       19.5
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "read": 1,
+     "drop": []
+    },
+    "m51xofbfcwts": {
+     "points": [
+      [
+       14.5,
+       26
+      ],
+      [
+       9.5,
+       26
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "read": 4,
+     "drop": []
+    },
+    "hn5gb0btcwts": {
+     "points": [
+      [
+       5.5,
+       20
+      ],
+      [
+       16,
+       15.5
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "read": 5,
+     "drop": []
+    },
+    "1937gznbcwts": {
+     "points": [
+      [
+       37,
+       30.5
+      ],
+      [
+       43,
+       29.5
+      ]
+     ],
+     "motion": [
+      [
+       21,
+       35
+      ],
+      [
+       34,
+       31.5
+      ]
+     ],
+     "block": [],
+     "read": 3,
+     "drop": []
+    },
+    "t6e2n164cwts": {
+     "points": [],
+     "motion": [],
+     "block": [],
+     "drop": [
+      [
+       26.7,
+       38
+      ]
+     ],
+     "read": 0,
+     "dropSteps": 5
+    },
+    "b9eb1lo5cwts": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       21.7,
+       33
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "ee8hdrakcwts": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       23.9,
+       33
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "vveu5zotcwts": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       26.7,
+       33
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "nue414f9cwts": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       29.5,
+       33
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "ywb2iiv1cwts": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       31.7,
+       33
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    }
+   },
+   "updatedAt": "2026-10-01T01:00:19.303Z",
+   "marks": []
+  },
+  {
+   "assign": {
+    "6p9mnc9d2cv8": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       43.8335,
+       27
+      ],
+      [
+       46.8335,
+       27
+      ],
+      [
+       47.3335,
+       26
+      ],
+      [
+       47.3335,
+       13
+      ]
+     ],
+     "read": 3
+    },
+    "ejf87o6u2cv8": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       5.5,
+       21
+      ],
+      [
+       12.5,
+       11
+      ]
+     ],
+     "read": 4
+    },
+    "i0c9p39a2cv8": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       36.5,
+       25
+      ],
+      [
+       30.5,
+       15
+      ]
+     ],
+     "read": 1
+    },
+    "jsxtn7za2cv8": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       47.5,
+       29.5
+      ],
+      [
+       41.5,
+       24
+      ],
+      [
+       41.5,
+       13.5
+      ]
+     ],
+     "read": 2
+    },
+    "k93t27n12cv8": {
+     "block": [],
+     "drop": [
+      [
+       26.7,
+       38
+      ]
+     ],
+     "dropDir": 1,
+     "dropKind": "5",
+     "dropSteps": 5,
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "wpwx4vvq2cv8": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       14.5,
+       22
+      ],
+      [
+       7.5,
+       14
+      ]
+     ],
+     "read": 5
+    }
+   },
+   "concept": "",
+   "format": "11",
+   "formation": "Spread",
+   "id": "lv7z6ecdph7q",
+   "marks": [],
+   "name": "Spread 70 Angle Switch Post X",
+   "nameAuto": true,
+   "notes": "wideouts should get slightly wider splits",
+   "players": [
+    {
+     "id": "ht9rhyex2cv8",
+     "label": "LT",
+     "shape": "o",
+     "x": 22.2665,
+     "y": 31
+    },
+    {
+     "id": "6lgtvvz02cv8",
+     "label": "LG",
+     "shape": "o",
+     "x": 24.4665,
+     "y": 31
+    },
+    {
+     "id": "w33qhye32cv8",
+     "label": "C",
+     "shape": "sq",
+     "x": 26.6665,
+     "y": 31
+    },
+    {
+     "id": "kmymugfr2cv8",
+     "label": "RG",
+     "shape": "o",
+     "x": 28.8665,
+     "y": 31
+    },
+    {
+     "id": "g9772pt92cv8",
+     "label": "RT",
+     "shape": "o",
+     "x": 31.066499999999998,
+     "y": 31
+    },
+    {
+     "id": "k93t27n12cv8",
+     "label": "QB",
+     "shape": "o",
+     "x": 26.6665,
+     "y": 35
+    },
+    {
+     "id": "i0c9p39a2cv8",
+     "label": "RB",
+     "shape": "o",
+     "x": 31,
+     "y": 35.5
+    },
+    {
+     "id": "ejf87o6u2cv8",
+     "label": "X",
+     "shape": "o",
+     "x": 5.666499999999999,
+     "y": 31
+    },
+    {
+     "id": "wpwx4vvq2cv8",
+     "label": "H",
+     "shape": "o",
+     "x": 14.6665,
+     "y": 32
+    },
+    {
+     "id": "6p9mnc9d2cv8",
+     "label": "Y",
+     "shape": "o",
+     "x": 44,
+     "y": 33
+    },
+    {
+     "id": "jsxtn7za2cv8",
+     "label": "Z",
+     "shape": "o",
+     "x": 47.5,
+     "y": 31
+    }
+   ],
+   "updatedAt": "2026-10-10T20:04:52.454Z"
+  },
+  {
+   "assign": {
+    "a9qaf5qkzivp": {
+     "block": [
+      [
+       31.8,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "bbhwng32zivp": {
+     "block": [],
+     "drop": [
+      [
+       26.7,
+       38
+      ]
+     ],
+     "dropDir": 1,
+     "dropKind": "5",
+     "dropSteps": 5,
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "bc30vbqhzivp": {
+     "block": [
+      [
+       24.1,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "e3fpe0nyzivp": {
+     "block": [
+      [
+       29.3,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "g6cfo9chzivp": {
+     "block": [],
+     "drop": [],
+     "motion": [
+      [
+       21,
+       32.5
+      ],
+      [
+       8,
+       32.5
+      ]
+     ],
+     "points": [
+      [
+       19.5,
+       25.5
+      ]
+     ],
+     "read": 0,
+     "routeName": ""
+    },
+    "ifq47iu5zivp": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [],
+     "points": [
+      [
+       47.5,
+       29.5
+      ],
+      [
+       41.5,
+       24
+      ]
+     ],
+     "read": 4,
+     "routeName": "Slant"
+    },
+    "jpld1s9jzivp": {
+     "block": [],
+     "drop": [],
+     "motion": [],
+     "points": [
+      [
+       15,
+       22.5
+      ],
+      [
+       8,
+       14.5
+      ]
+     ],
+     "read": 2
+    },
+    "t6v3j3y2zivp": {
+     "block": [
+      [
+       21.6,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "ujh5rc9vzivp": {
+     "block": [
+      [
+       22.5,
+       33.5
+      ]
+     ],
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "wmkl4ywvzivp": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [],
+     "points": [
+      [
+       15,
+       27
+      ],
+      [
+       16,
+       25
+      ],
+      [
+       8,
+       24.5
+      ]
+     ],
+     "read": 1,
+     "routeName": "Zig out"
+    },
+    "zpq5aad5zivp": {
+     "block": [
+      [
+       26.7,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    }
+   },
+   "concept": "Pass pro right",
+   "format": "11",
+   "formation": "Leo Bunch",
+   "id": "oa0c5g94k3mw",
+   "marks": [],
+   "name": "Leo Bunch 71 Z Out Rebound Dart",
+   "nameAuto": true,
+   "notes": "wideouts should get slightly wider splits",
+   "players": [
+    {
+     "id": "a9qaf5qkzivp",
+     "label": "RT",
+     "shape": "o",
+     "x": 31.1665,
+     "y": 31
+    },
+    {
+     "id": "e3fpe0nyzivp",
+     "label": "RG",
+     "shape": "o",
+     "x": 28.6665,
+     "y": 31
+    },
+    {
+     "id": "zpq5aad5zivp",
+     "label": "C",
+     "shape": "sq",
+     "x": 26.6665,
+     "y": 31
+    },
+    {
+     "id": "bc30vbqhzivp",
+     "label": "LG",
+     "shape": "o",
+     "x": 24.6665,
+     "y": 31
+    },
+    {
+     "id": "t6v3j3y2zivp",
+     "label": "LT",
+     "shape": "o",
+     "x": 22.1665,
+     "y": 31
+    },
+    {
+     "id": "bbhwng32zivp",
+     "label": "QB",
+     "shape": "o",
+     "x": 26.6665,
+     "y": 35
+    },
+    {
+     "id": "ujh5rc9vzivp",
+     "label": "RB",
+     "shape": "o",
+     "x": 24.6665,
+     "y": 35.5
+    },
+    {
+     "id": "ifq47iu5zivp",
+     "label": "X",
+     "shape": "o",
+     "x": 47.6665,
+     "y": 31
+    },
+    {
+     "id": "jpld1s9jzivp",
+     "label": "H",
+     "shape": "o",
+     "x": 15.1665,
+     "y": 32.5
+    },
+    {
+     "id": "wmkl4ywvzivp",
+     "label": "Y",
+     "shape": "o",
+     "x": 13.1665,
+     "y": 31
+    },
+    {
+     "id": "g6cfo9chzivp",
+     "label": "Z",
+     "shape": "o",
+     "x": 11.1665,
+     "y": 32.5
+    }
+   ],
+   "updatedAt": "2026-10-10T22:48:39.273Z"
+  },
+  {
+   "assign": {
+    "32uy7d9gingr": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [],
+     "points": [
+      [
+       11.5,
+       31
+      ],
+      [
+       5.5,
+       30
+      ]
+     ],
+     "read": 2,
+     "routeName": "Flat"
+    },
+    "chnvv937ingr": {
+     "block": [
+      [
+       26.7,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "d0ecfo8tingr": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [],
+     "points": [
+      [
+       49.5,
+       27
+      ],
+      [
+       50.5,
+       25
+      ],
+      [
+       42.5,
+       24.5
+      ]
+     ],
+     "read": 4,
+     "routeName": "Zig in"
+    },
+    "dw6h90fvingr": {
+     "block": [
+      [
+       31.7,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "ed81n2zjingr": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [],
+     "points": [
+      [
+       5.5,
+       29.5
+      ],
+      [
+       11.5,
+       24
+      ]
+     ],
+     "read": 1,
+     "routeName": "Slant"
+    },
+    "fpen1g8tingr": {
+     "block": [
+      [
+       23.9,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "pe4ntj3fingr": {
+     "block": [],
+     "carry": false,
+     "drop": [],
+     "dropSteps": 0,
+     "motion": [
+      [
+       10,
+       31.5
+      ]
+     ],
+     "points": [
+      [
+       10,
+       21.5
+      ],
+      [
+       3,
+       13.5
+      ]
+     ],
+     "read": 3,
+     "routeName": "Corner"
+    },
+    "qq0uqfw7ingr": {
+     "block": [],
+     "drop": [
+      [
+       26.7,
+       36.5
+      ]
+     ],
+     "dropDir": 1,
+     "dropKind": "3",
+     "dropSteps": 3,
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "vqzb6kygingr": {
+     "block": [
+      [
+       29.5,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    },
+    "yzzeju59ingr": {
+     "block": [
+      [
+       21.7,
+       33
+      ]
+     ],
+     "carry": false,
+     "drop": [],
+     "motion": [],
+     "points": [],
+     "read": 0
+    }
+   },
+   "concept": "Pass pro left",
+   "format": "11",
+   "formation": "Spread",
+   "id": "u04jwnuxjei0",
+   "marks": [],
+   "name": "Spread 61 Y Jet Mesh Zig",
+   "notes": "",
+   "players": [
+    {
+     "id": "yzzeju59ingr",
+     "label": "LT",
+     "shape": "o",
+     "x": 22.2665,
+     "y": 31
+    },
+    {
+     "id": "fpen1g8tingr",
+     "label": "LG",
+     "shape": "o",
+     "x": 24.4665,
+     "y": 31
+    },
+    {
+     "id": "chnvv937ingr",
+     "label": "C",
+     "shape": "sq",
+     "x": 26.6665,
+     "y": 31
+    },
+    {
+     "id": "vqzb6kygingr",
+     "label": "RG",
+     "shape": "o",
+     "x": 28.8665,
+     "y": 31
+    },
+    {
+     "id": "dw6h90fvingr",
+     "label": "RT",
+     "shape": "o",
+     "x": 31.066499999999998,
+     "y": 31
+    },
+    {
+     "id": "qq0uqfw7ingr",
+     "label": "QB",
+     "shape": "o",
+     "x": 26.6665,
+     "y": 35
+    },
+    {
+     "id": "ag6e0ty6ingr",
+     "label": "RB",
+     "shape": "o",
+     "x": 24,
+     "y": 35.5
+    },
+    {
+     "id": "ed81n2zjingr",
+     "label": "X",
+     "shape": "o",
+     "x": 5.666499999999999,
+     "y": 31
+    },
+    {
+     "id": "32uy7d9gingr",
+     "label": "H",
+     "shape": "o",
+     "x": 14.6665,
+     "y": 32
+    },
+    {
+     "id": "pe4ntj3fingr",
+     "label": "Y",
+     "shape": "o",
+     "x": 38.6665,
+     "y": 32
+    },
+    {
+     "id": "d0ecfo8tingr",
+     "label": "Z",
+     "shape": "o",
+     "x": 47.6665,
+     "y": 31
+    }
+   ],
+   "updatedAt": "2026-10-10T19:54:39.604Z"
+  },
+  {
+   "assign": {
+    "6p9mnc9d2cv8": {
+     "block": [],
+     "motion": [],
+     "points": [
+      [
+       43.8335,
+       27
+      ],
+      [
+       46.8335,
+       27
+      ],
+      [
+       47.3335,
+       26
+      ],
+      [
+       47.3335,
+       13
+      ]
+     ],
+     "read": 3,
+     "drop": []
+    },
+    "ejf87o6u2cv8": {
+     "block": [],
+     "motion": [],
+     "points": [
+      [
+       5.5,
+       21
+      ],
+      [
+       12.5,
+       11
+      ]
+     ],
+     "read": 4,
+     "drop": []
+    },
+    "i0c9p39a2cv8": {
+     "block": [],
+     "motion": [],
+     "points": [
+      [
+       36.5,
+       25
+      ],
+      [
+       30.5,
+       15
+      ]
+     ],
+     "read": 1,
+     "drop": []
+    },
+    "jsxtn7za2cv8": {
+     "block": [],
+     "motion": [],
+     "points": [
+      [
+       47.5,
+       29.5
+      ],
+      [
+       41.5,
+       24
+      ],
+      [
+       41.5,
+       13.5
+      ]
+     ],
+     "read": 2,
+     "drop": []
+    },
+    "wpwx4vvq2cv8": {
+     "block": [],
+     "motion": [],
+     "points": [
+      [
+       14.5,
+       22
+      ],
+      [
+       7.5,
+       14
+      ]
+     ],
+     "read": 5,
+     "drop": []
+    }
+   },
+   "concept": "",
+   "format": "11",
+   "formation": "Spread",
+   "id": "zelz2hcnhkcd",
+   "name": "Spread Right Angle Slime Quick Cross Deep X",
+   "notes": "wideouts should get slightly wider splits",
+   "players": [
+    {
+     "id": "ht9rhyex2cv8",
+     "label": "LT",
+     "shape": "o",
+     "x": 22.2665,
+     "y": 31
+    },
+    {
+     "id": "6lgtvvz02cv8",
+     "label": "LG",
+     "shape": "o",
+     "x": 24.4665,
+     "y": 31
+    },
+    {
+     "id": "w33qhye32cv8",
+     "label": "C",
+     "shape": "sq",
+     "x": 26.6665,
+     "y": 31
+    },
+    {
+     "id": "kmymugfr2cv8",
+     "label": "RG",
+     "shape": "o",
+     "x": 28.8665,
+     "y": 31
+    },
+    {
+     "id": "g9772pt92cv8",
+     "label": "RT",
+     "shape": "o",
+     "x": 31.066499999999998,
+     "y": 31
+    },
+    {
+     "id": "k93t27n12cv8",
+     "label": "QB",
+     "shape": "o",
+     "x": 26.6665,
+     "y": 35
+    },
+    {
+     "id": "i0c9p39a2cv8",
+     "label": "RB",
+     "shape": "o",
+     "x": 31,
+     "y": 35.5
+    },
+    {
+     "id": "ejf87o6u2cv8",
+     "label": "X",
+     "shape": "o",
+     "x": 5.666499999999999,
+     "y": 31
+    },
+    {
+     "id": "wpwx4vvq2cv8",
+     "label": "H",
+     "shape": "o",
+     "x": 14.6665,
+     "y": 32
+    },
+    {
+     "id": "6p9mnc9d2cv8",
+     "label": "Y",
+     "shape": "o",
+     "x": 44,
+     "y": 33
+    },
+    {
+     "id": "jsxtn7za2cv8",
+     "label": "Z",
+     "shape": "o",
+     "x": 47.5,
+     "y": 31
+    }
+   ],
+   "updatedAt": "2026-10-10T19:54:39.604Z",
+   "marks": []
+  }
+ ],
+ "routes": [
+  {
+   "back": null,
+   "id": "cdzwf9jxcghv",
+   "kind": "concept",
+   "name": "Mesh",
+   "play": [
+    "slant",
+    "corner",
+    "flat"
+   ],
+   "pts": [],
+   "updatedAt": "2026-10-10T15:42:48.452Z"
+  },
+  {
+   "id": "egjxk1df72h4",
+   "name": "Angle",
+   "pts": [
+    [
+     5.5,
+     10.5
+    ],
+    [
+     -0.5,
+     20.5
+    ]
+   ],
+   "updatedAt": "2026-09-29T03:26:24.328Z"
+  },
+  {
+   "back": [
+    "post",
+    "wheel"
+   ],
+   "id": "fmtxj41y9f08",
+   "kind": "concept",
+   "name": "Strike",
+   "play": [
+    "comeback",
+    "seam"
+   ],
+   "pts": [],
+   "updatedAt": "2026-10-10T15:12:26.936Z"
+  },
+  {
+   "id": "gttl3b8fiyzr",
+   "kind": "concept",
+   "name": "Rebound",
+   "pts": [],
+   "play": [
+    "dig",
+    "zig",
+    "corner"
+   ],
+   "back": null,
+   "updatedAt": "2026-10-10T22:47:46.599Z"
+  },
+  {
+   "id": "kwd5rfyw3zbc",
+   "name": "Sluggo",
+   "pts": [
+    [
+     0,
+     1.5
+    ],
+    [
+     -6,
+     7
+    ],
+    [
+     -6,
+     17.5
+    ]
+   ],
+   "updatedAt": "2026-09-29T03:24:00.264Z"
+  },
+  {
+   "back": null,
+   "id": "mqowe5d0h7wf",
+   "kind": "concept",
+   "name": "Post X",
+   "play": [
+    "post",
+    "corner"
+   ],
+   "pts": [],
+   "updatedAt": "2026-10-10T19:58:27.135Z"
+  },
+  {
+   "id": "mtcm23lbrt1k",
+   "name": "Post-Corner",
+   "pts": [
+    [
+     0,
+     11
+    ],
+    [
+     -1,
+     13
+    ],
+    [
+     6,
+     17
+    ]
+   ],
+   "updatedAt": "2026-10-01T00:29:55.016Z"
+  },
+  {
+   "back": null,
+   "id": "ud06cem3fbyu",
+   "kind": "concept",
+   "name": "Angle Switch",
+   "play": [
+    "sluggo",
+    "go",
+    "angle"
+   ],
+   "pts": [],
+   "updatedAt": "2026-10-10T19:56:59.094Z"
+  },
+  {
+   "id": "uvbwhblrj7mx",
+   "kind": "concept",
+   "name": "Dart",
+   "pts": [],
+   "play": [
+    "slant"
+   ],
+   "back": null,
+   "updatedAt": "2026-10-10T22:47:57.801Z"
+  }
+ ],
+ "formations": [
+  {
+   "format": "11",
+   "id": "f11-leo",
+   "name": "Leo",
+   "players": [
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     -2,
+     5.5
+    ],
+    [
+     "X",
+     21,
+     1
+    ],
+    [
+     "H",
+     -10.5,
+     2.5
+    ],
+    [
+     "Y",
+     -16.5,
+     2.5
+    ],
+    [
+     "Z",
+     -21,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:04:38.836Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-leo-bunch",
+   "name": "Leo Bunch",
+   "players": [
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     -2,
+     5.5
+    ],
+    [
+     "X",
+     21,
+     1
+    ],
+    [
+     "H",
+     -11.5,
+     2.5
+    ],
+    [
+     "Y",
+     -13.5,
+     1
+    ],
+    [
+     "Z",
+     -15.5,
+     2.5
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:05:57.847Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-leo-te",
+   "name": "Leo TE",
+   "players": [
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     -2,
+     5.5
+    ],
+    [
+     "X",
+     21,
+     1
+    ],
+    [
+     "H",
+     -12,
+     2
+    ],
+    [
+     "Z",
+     -21,
+     2
+    ],
+    [
+     "Y",
+     -7,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T20:12:32.615Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-lynn",
+   "name": "Lynn",
+   "players": [
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     -4,
+     5.5
+    ],
+    [
+     "X",
+     21,
+     1
+    ],
+    [
+     "H",
+     3.5,
+     5.5
+    ],
+    [
+     "Y",
+     -12,
+     2
+    ],
+    [
+     "Z",
+     -21,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:09:44.112Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-reo",
+   "name": "Reo",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     2,
+     5.5
+    ],
+    [
+     "X",
+     -21,
+     1
+    ],
+    [
+     "H",
+     10.5,
+     2.5
+    ],
+    [
+     "Y",
+     16.5,
+     2.5
+    ],
+    [
+     "Z",
+     21,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:04:31.037Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-reo-bunch",
+   "name": "Reo Bunch",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     2,
+     5.5
+    ],
+    [
+     "X",
+     -21,
+     1
+    ],
+    [
+     "H",
+     11.5,
+     2.5
+    ],
+    [
+     "Y",
+     13.5,
+     1
+    ],
+    [
+     "Z",
+     15.5,
+     2.5
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:05:46.798Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-reo-te",
+   "name": "Reo TE",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     2,
+     5.5
+    ],
+    [
+     "X",
+     -21,
+     1
+    ],
+    [
+     "H",
+     12,
+     2
+    ],
+    [
+     "Z",
+     21,
+     2
+    ],
+    [
+     "Y",
+     6.5,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T20:11:42.402Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-rick",
+   "name": "Rick",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     4,
+     5.5
+    ],
+    [
+     "X",
+     -21,
+     1
+    ],
+    [
+     "H",
+     -3.5,
+     5.5
+    ],
+    [
+     "Y",
+     12,
+     2
+    ],
+    [
+     "Z",
+     21,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:09:29.917Z"
+  },
+  {
+   "format": "11",
+   "hidden": true,
+   "id": "f11-shotgun-doubles",
+   "name": "Shotgun Doubles",
+   "players": [],
+   "updatedAt": "2026-10-10T19:54:39.404Z"
+  },
+  {
+   "format": "11",
+   "id": "f11-spread",
+   "name": "Spread",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     2,
+     5.5
+    ],
+    [
+     "X",
+     -21,
+     1
+    ],
+    [
+     "H",
+     -12,
+     2
+    ],
+    [
+     "Y",
+     12,
+     2
+    ],
+    [
+     "Z",
+     21,
+     1
+    ]
+   ],
+   "updatedAt": "2026-10-10T16:06:18.612Z"
+  },
+  {
+   "id": "f11-spread-h-los",
+   "name": "Spread H LOS",
+   "format": "11",
+   "players": [
+    [
+     "LT",
+     -4.5,
+     1
+    ],
+    [
+     "LG",
+     -2,
+     1
+    ],
+    [
+     "C",
+     0,
+     1,
+     "sq"
+    ],
+    [
+     "RG",
+     2,
+     1
+    ],
+    [
+     "RT",
+     4.5,
+     1
+    ],
+    [
+     "QB",
+     0,
+     5
+    ],
+    [
+     "RB",
+     4.5,
+     5
+    ],
+    [
+     "X",
+     -21,
+     2.5
+    ],
+    [
+     "H",
+     -12,
+     1
+    ],
+    [
+     "Y",
+     12,
+     2
+    ],
+    [
+     "Z",
+     17,
+     1.5
+    ]
+   ],
+   "updatedAt": "2026-10-01T00:38:38.536Z"
+  }
+ ],
+ "deleted": {}
+}
