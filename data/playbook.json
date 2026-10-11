@@ -1,7 +1,7 @@
 {
  "app": "offense-playbook",
  "version": 1,
- "updatedAt": "2026-10-11T20:03:10.624Z",
+ "updatedAt": "2026-10-11T20:03:23.884Z",
  "plays": [
   {
    "id": "hmww7n1j6zuo",
@@ -1169,6 +1169,19 @@
   }
  ],
  "routes": [
+  {
+   "id": "48bik4ee3ef9",
+   "kind": "concept",
+   "name": "Knife",
+   "pts": [],
+   "play": [
+    "dig",
+    "slant",
+    "dig"
+   ],
+   "back": null,
+   "updatedAt": "2026-10-11T20:03:22.437Z"
+  },
   {
    "back": null,
    "id": "cdzwf9jxcghv",
