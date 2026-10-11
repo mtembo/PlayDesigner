@@ -4,11 +4,50 @@
   I built this to draw, save and print offensive plays for 11-man, 7v7 and 5v5 flag.
 
   Version history (newest first)
-  v1.7  9/30/26  M. Tembo  Free draw: I drag a line by hand onto a player (route, run path, motion or block)
+  v3.0  10/11/26 M. Tembo  Motion that jets across the ball and comes back to its own side reads Jet Orbit.
+  v2.9  10/10/26 M. Tembo  Combo name ideas: when a combo has no name, I get tappable suggestions built from
+                           its routes (read 1 first), real concept names when the routes fit one, and words that
+                           start with the same letter most of my combo names do. Names already in use are skipped.
+  v2.8  10/10/26 M. Tembo  Only players lined up in the backfield inside the tackle box count as backs, so a
+                           receiver set a few yards off the ball out wide no longer turns Spread into Rick/Lyn.
+  v2.7  10/10/26 M. Tembo  Rename or remove any formation, mine or stock. Renaming moves every play filed under
+                           the old name to the new one, and renaming onto a name I already saved merges the two
+                           (Shotgun Doubles into Spread). Removing a stock formation hides it, and I can restore it.
+  v2.6  10/10/26 M. Tembo  Rick/Lyn only applies in shotgun. Under center with the backs stacked is I, plus the
+                           tight end side (I-Right, I-Left). Run names now read formation, motions, the run
+                           call, then each receiver's route by player (I-Right Z Shuffle Power Right X Arrow).
+                           In-and-back motion reads Shuffle. A drawn route that matches a route I saved to the
+                           tree, or a stock tree route, takes that route's name.
+  v2.5  10/10/26 M. Tembo  Personnel: I can add a tight end, receiver or back, remove a player, relabel one,
+                           or switch a player's role (TE, WR, back), which also moves him to a sensible spot.
+                           Then I save the alignment as a formation like before.
+  v2.4  10/10/26 M. Tembo  The auto name now ends with the backside routes too: the playside combo, then the
+                           backside combo (its name if I've named it, otherwise its routes). An orbit that
+                           crosses behind the QB and comes back is called Orbit instead of Out.
+  v2.3  10/10/26 M. Tembo  Auto play names in my terminology: formation (Spread, Reo/Leo, Rick/Lyn,
+                           Right/Left, plus Bunch), then protection (60/70/80/90 with 0 right, 1 left), then
+                           motions, then the route combo by concept name. A run stops after the scheme.
+                           I name a route combo once and the namer uses that name from then on.
+  v2.2  10/3/26  M. Tembo  Merged my 9/28 save fixes (save by name, name clears after a save) from the published
+                           artifact into this copy, so the artifact and my GitHub Pages copy run the same file.
+  v2.1  9/30/26  M. Tembo  QB rollout and bootleg buttons that follow the play side, and Free draw can now
+                           draw the QB's drop by hand. The QB throws when he reaches the end of the drop.
+  v2.0  9/30/26  M. Tembo  GitHub sync: plays, saved routes and saved formations save to a JSON file in my
+                           GitHub repo through the GitHub API, so every device I connect sees the same
+                           playbook without export and import. Deletes sync too.
+  v1.9  9/30/26  M. Tembo  Free draw: I drag a line by hand onto a player (route, run path, motion or block)
                            or anywhere on the field as a loose mark (including a toss pitch). QB drops
                            (quick game, 3, 5 and 7 step, play action). Run game: A, B, C and D gap runs and
                            toss to either side. Blocking schemes: inside zone, outside zone, power, counter,
                            trap, draw, RB screen, pass pro and slide pro. Added Zig in and Zig out routes.
+                           Run play: I animate the whole play. Motion goes first, then at the snap every
+                           player runs his drop, block and route, and the QB throws the ball to read 1
+                           (or hands off or pitches to the ball carrier on a run).
+  v1.8  9/28/26  M. Tembo  After a save the name clears and the board detaches from the saved play, so the
+                           next save can't overwrite it by accident. The drawing stays up to build the next play.
+  v1.7  9/28/26  M. Tembo  Fixed plays overwriting each other. Saving reused the last saved play's id, so a
+                           new play drawn without tapping New play replaced the old one. Plays now save by
+                           name like formations: a new name adds a play, the same name updates that play.
   v1.6  9/28/26  M. Tembo  Saved formations: I line players up, name it and save it. Saving a name that
                            already exists in that game format overwrites it, stock formations included.
                            Saved formations sync and ride along in export/import.
@@ -184,6 +223,10 @@
       <button id="btnExportBook">Export playbook</button>
       <button id="btnImportBook">Import playbook</button>
     </div>
+    <!-- I keep the playbook in my GitHub repo from here. M. Tembo - 9/30/26 -->
+    <div class="row no-print" style="margin-top:6px">
+      <button id="btnGitHub">GitHub sync</button>
+    </div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
     <div class="hint" id="bookMsg" aria-live="polite"></div>
     <label for="search">Find a play</label>
@@ -210,12 +253,21 @@
         <option value="run">as Run path</option>
         <option value="motion">as Motion</option>
         <option value="block">as Block</option>
+        <option value="drop">as QB drop</option> <!-- M. Tembo - 9/30/26 -->
         <option value="pitch">as Pitch (loose mark)</option>
       </select>
       <button data-tool="read" aria-pressed="false">Read order</button>
       <button data-tool="erase" aria-pressed="false">Erase</button>
       <button id="btnDone" disabled>Finish line</button>
       <button id="btnUndo" disabled>Undo</button>
+      <!-- I watch the play run from here. M. Tembo - 9/30/26 -->
+      <button id="btnRun" class="primary">Run play</button>
+      <button id="btnReset" disabled>Reset</button>
+      <select id="runSpeed" aria-label="Playback speed">
+        <option value="1">Full speed</option>
+        <option value="0.5" selected>Half speed</option>
+        <option value="0.25">Quarter speed</option>
+      </select>
     </div>
     <div class="hint" id="hint" aria-live="polite"></div>
 
@@ -238,7 +290,15 @@
   <aside class="panel inspector" aria-label="Play details">
     <h2>Play</h2>
     <label for="fName">Name</label>
-    <input id="fName" placeholder="e.g. Trips Right Stick">
+    <input id="fName" placeholder="e.g. Spread 80 Semi">
+    <!-- The name fills itself from the play until I type my own. M. Tembo - 10/10/26 -->
+    <div class="hint" id="autoHint" aria-live="polite"></div>
+    <div class="row" style="margin-top:4px">
+      <input id="fComboName" placeholder="Name this route combo, e.g. Semi" style="flex:1 1 140px">
+      <button id="btnNameCombo" style="flex:0 0 auto">Name combo</button>
+    </div>
+    <div class="hint" id="comboIdeas"></div> <!-- name ideas for an unnamed combo. M. Tembo - 10/10/26 -->
+    <button id="btnAutoName" style="margin-top:4px">Use auto name</button>
     <label for="fFormat">Game format</label>
     <select id="fFormat">
       <option value="11">11-man tackle</option>
@@ -250,15 +310,42 @@
     <div class="row" style="margin-top:6px">
       <button id="btnFlip">Flip left/right</button>
     </div>
+    <!-- Personnel: I swap players in and out of a formation here. M. Tembo - 10/10/26 -->
+    <div class="sub-head">Personnel</div>
+    <div class="tree">
+      <button data-add="te">Add TE</button>
+      <button data-add="wr">Add WR</button>
+      <button data-add="back">Add back</button>
+    </div>
+    <div id="playerEdit" hidden>
+      <div class="sub-head" id="playerHead">Selected player</div>
+      <div class="row">
+        <input id="fLabel" maxlength="3" aria-label="Player label" style="flex:0 1 80px;text-transform:uppercase">
+        <button class="danger" id="btnRemovePlayer" style="flex:1 1 auto">Remove player</button>
+      </div>
+      <div class="tree" style="margin-top:6px">
+        <button data-role="te">Make TE</button>
+        <button data-role="wr">Make WR</button>
+        <button data-role="back">Make back</button>
+      </div>
+    </div>
+    <div class="hint" id="personnelMsg" aria-live="polite"></div>
     <!-- I save the current alignment as a formation from here. M. Tembo - 9/28/26 -->
     <label for="fFormName">Save this alignment as a formation</label>
     <div class="row">
       <input id="fFormName" placeholder="e.g. Trey Right" style="flex:2 1 120px">
       <button id="btnSaveForm" style="flex:1 1 auto">Save formation</button>
     </div>
-    <div class="row" style="margin-top:6px">
-      <button class="danger" id="btnRemoveForm" hidden>Remove saved formation</button>
+    <!-- I rename or remove the formation that's selected above, mine or stock. M. Tembo - 10/10/26 -->
+    <label for="fFormRename" id="formRenameLabel">Rename this formation</label>
+    <div class="row">
+      <input id="fFormRename" placeholder="e.g. Spread" style="flex:2 1 120px">
+      <button id="btnRenameForm" style="flex:1 1 auto">Rename</button>
     </div>
+    <div class="row" style="margin-top:6px">
+      <button class="danger" id="btnRemoveForm">Remove formation</button>
+    </div>
+    <div class="hint" id="hiddenForms"></div>
     <div class="hint" id="formMsg" aria-live="polite"></div>
     <label for="fConcept">Concept or tags</label>
     <input id="fConcept" placeholder="e.g. Quick game, red zone">
@@ -286,6 +373,8 @@
       <button data-drop="5">5 step</button>
       <button data-drop="7">7 step</button>
       <button data-drop="pa">Play action</button>
+      <button data-drop="roll">Rollout</button> <!-- M. Tembo - 9/30/26 -->
+      <button data-drop="boot">Bootleg</button> <!-- M. Tembo - 9/30/26 -->
       <button data-drop="clear">Clear drop</button>
     </div>
 
@@ -324,6 +413,28 @@
   </aside>
 </div>
 
+<!-- GitHub sync settings. The token only lives in this browser. M. Tembo - 9/30/26 -->
+<dialog id="ghDlg">
+  <h2>GitHub sync</h2>
+  <p class="hint" style="margin:0">I save the playbook as one JSON file in a repo. I use a fine-grained token limited to that one repo with Contents set to Read and write. The token stays in this browser only, so I enter it once on each device.</p>
+  <label for="ghToken">Personal access token</label>
+  <input id="ghToken" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
+  <div class="row">
+    <div style="flex:1 1 120px"><label for="ghOwner">Owner</label><input id="ghOwner" spellcheck="false"></div>
+    <div style="flex:1 1 120px"><label for="ghRepo">Repository</label><input id="ghRepo" spellcheck="false"></div>
+  </div>
+  <div class="row">
+    <div style="flex:1 1 90px"><label for="ghBranch">Branch</label><input id="ghBranch" spellcheck="false"></div>
+    <div style="flex:2 1 150px"><label for="ghPath">File</label><input id="ghPath" spellcheck="false"></div>
+  </div>
+  <div class="hint" id="ghMsg" aria-live="polite"></div>
+  <div class="row" style="margin-top:10px">
+    <button type="button" class="primary" id="ghConnect">Connect and sync</button>
+    <button type="button" id="ghDisconnect">Disconnect this browser</button>
+    <button type="button" id="ghClose">Close</button>
+  </div>
+</dialog>
+
 <dialog id="confirmDlg">
   <form method="dialog">
     <p id="confirmText"></p>
@@ -341,8 +452,22 @@
   I put the line of scrimmage at y = 30, so the offense sees 30 yards downfield and 10 behind.
 
   Version history (newest first)
-  v1.7  9/30/26  M. Tembo  Free draw tool and loose marks, QB drops, gap runs and toss, blocking schemes,
+  v3.0  10/11/26 M. Tembo  Jet and back reads Jet Orbit.
+  v2.9  10/10/26 M. Tembo  Tappable combo name suggestions for any unnamed combo.
+  v2.8  10/10/26 M. Tembo  Backs must be in the tackle box; fixes Spread reading as Lyn.
+  v2.7  10/10/26 M. Tembo  Rename, merge, remove and hide formations; plays follow a rename.
+  v2.6  10/10/26 M. Tembo  Rick/Lyn shotgun only, I-Right/I-Left, motions and receiver routes in run names, Shuffle, shape matching.
+  v2.5  10/10/26 M. Tembo  Personnel editing: add, remove, relabel and change a player's role.
+  v2.4  10/10/26 M. Tembo  Backside combo added to the auto name; orbit and return motion reads as Orbit.
+  v2.3  10/10/26 M. Tembo  Auto play names (formation, protection, motions, concept) and named route combos.
+  v2.2  10/3/26  M. Tembo  Brought in the v1.7 and v1.8 save fixes so the artifact and GitHub copies match.
+  v2.1  9/30/26  M. Tembo  Rollout and bootleg drops, and Free draw as QB drop.
+  v2.0  9/30/26  M. Tembo  GitHub sync of the whole playbook to one JSON file in a repo, with merge and deletes.
+  v1.9  9/30/26  M. Tembo  Free draw tool and loose marks, QB drops, gap runs and toss, blocking schemes,
                            Zig in and Zig out. Each player now chains motion, drop, block, then route.
+                           Run play animation with a thrown, handed off or pitched ball.
+  v1.8  9/28/26  M. Tembo  Name clears after each save.
+  v1.7  9/28/26  M. Tembo  Plays save by name so a new name no longer overwrites the last play.
   v1.6  9/28/26  M. Tembo  Saved formations with overwrite by name, included in export/import.
   v1.5  9/28/26  M. Tembo  Playbook export/import as a .json backup file.
   v1.4  9/28/26  M. Tembo  New double moves and saved custom routes in the route tree.
@@ -428,11 +553,11 @@
     const out = Object.assign({}, FORMATIONS[format] || {});
     myForms.filter(f => f.format === format).forEach(f => {
       Object.keys(out).forEach(k => { if (k.toLowerCase() === f.name.toLowerCase()) delete out[k]; });
-      out[f.name] = f.players;
+      if (!f.hidden) out[f.name] = f.players; // a hidden record just takes a stock formation off my list. M. Tembo - 10/10/26
     });
     return out;
   } // M. Tembo - 9/28/26
-  function isMine(format, name) { return myForms.some(f => f.format === format && f.name.toLowerCase() === (name || "").toLowerCase()); } // M. Tembo - 9/28/26
+  function isMine(format, name) { return myForms.some(f => f.format === format && !f.hidden && f.name.toLowerCase() === (name || "").toLowerCase()); } // M. Tembo - 10/10/26
   let freeDraw = null;          // the hand-drawn stroke in progress: {pid, kind, pts}. M. Tembo - 9/30/26
   let side = 1;                 // play side for runs and schemes: 1 is the offense's right, -1 its left. M. Tembo - 9/30/26
   const OL_LABELS = ["LT", "LG", "C", "RG", "RT"]; // M. Tembo - 9/30/26
@@ -522,6 +647,7 @@
       el("line", { x1: x2 + nx, y1: y2 + ny, x2: x2 - nx, y2: y2 - ny, stroke: col.block, "stroke-width": sw, "stroke-linecap": "round" }, target);
     }; // M. Tembo - 9/30/26
 
+    const lineStart = target.childNodes.length; // everything after this is a play line, so I can fade them while the play runs. M. Tembo - 9/30/26
     // Loose marks go under the players, and in erase mode each one gets a wide invisible hit line. M. Tembo - 9/30/26
     (p.marks || []).forEach(mk2 => { // M. Tembo - 9/30/26
       if (!mk2.pts || mk2.pts.length < 2) return;
@@ -580,21 +706,23 @@
         handles(motion, "m", col.motion); handles(drop, "d", col.drop); handles(block, "b", col.block); handles(route, "p", col.route); // M. Tembo - 9/30/26
       }
     });
+    if (opts.pos) Array.from(target.childNodes).slice(lineStart).forEach(n => { if (n.nodeName !== "defs") n.setAttribute("opacity", "0.3"); }); // M. Tembo - 9/30/26
 
     p.players.forEach(pl => {
+      const [px, py] = opts.pos && opts.pos[pl.id] ? opts.pos[pl.id] : [pl.x, pl.y]; // M. Tembo - 9/30/26
       const g = el("g", { "data-player": pl.id, style: opts.mini ? "" : "cursor:pointer" }, target);
-      const isSel = !opts.mini && pl.id === selected;
+      const isSel = !opts.mini && !opts.pos && pl.id === selected; // M. Tembo - 9/30/26
       const fill = pl.label === "QB" ? "#1B1F24" : "#FFFFFF";
       const txt = pl.label === "QB" ? "#FFFFFF" : "#1B1F24";
-      if (pl.shape === "sq") el("rect", { x: pl.x - R, y: pl.y - R, width: R * 2, height: R * 2, rx: 0.2, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g);
-      else el("circle", { cx: pl.x, cy: pl.y, r: R, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g);
-      if (isSel) el("circle", { cx: pl.x, cy: pl.y, r: R + 0.5, fill: "none", stroke: "#FFD447", "stroke-width": 0.22 }, g);
+      if (pl.shape === "sq") el("rect", { x: px - R, y: py - R, width: R * 2, height: R * 2, rx: 0.2, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g); // M. Tembo - 9/30/26
+      else el("circle", { cx: px, cy: py, r: R, fill, stroke: "#1B1F24", "stroke-width": 0.18 }, g); // M. Tembo - 9/30/26
+      if (isSel) el("circle", { cx: px, cy: py, r: R + 0.5, fill: "none", stroke: "#FFD447", "stroke-width": 0.22 }, g); // M. Tembo - 9/30/26
       if (!opts.mini) {
-        const t = el("text", { x: pl.x, y: pl.y + 0.42, "text-anchor": "middle", "font-size": pl.label.length > 1 ? 0.95 : 1.15, "font-weight": 700, fill: txt, "font-family": "Oswald, Arial Narrow, sans-serif", "pointer-events": "none" }, g);
+        const t = el("text", { x: px, y: py + 0.42, "text-anchor": "middle", "font-size": pl.label.length > 2 ? 0.78 : pl.label.length > 1 ? 0.95 : 1.15, /* 3-letter labels like Y2 fit. M. Tembo - 10/10/26 */ "font-weight": 700, fill: txt, "font-family": "Oswald, Arial Narrow, sans-serif", "pointer-events": "none" }, g);
         t.textContent = pl.label;
       }
       const a = p.assign[pl.id];
-      if (a && a.read && !opts.mini) {
+      if (a && a.read && !opts.mini && !opts.pos) { // I hide the read badges while the play runs. M. Tembo - 9/30/26
         const mo = a.motion || []; // M. Tembo - 9/28/26
         const bl = a.block || []; // M. Tembo - 9/28/26
         const dr = a.drop || []; // M. Tembo - 9/30/26
@@ -604,9 +732,19 @@
         t.textContent = a.read;
       }
     });
+
+    // The ball: a shadow on the turf, and the ball itself lifted by the arc of the throw. M. Tembo - 9/30/26
+    if (opts.ball) { // M. Tembo - 9/30/26
+      const [bx, by, lift, ang] = opts.ball;
+      if (lift > 0.05) el("ellipse", { cx: bx, cy: by, rx: 0.45, ry: 0.25, fill: "#000", opacity: 0.3 }, target);
+      const bg = el("g", { transform: "translate(" + bx + "," + (by - lift) + ") rotate(" + (ang || 0) + ")" }, target);
+      el("ellipse", { cx: 0, cy: 0, rx: 0.6, ry: 0.36, fill: "#7A3E12", stroke: "#3B1E08", "stroke-width": 0.08 }, bg);
+      el("line", { x1: -0.22, x2: 0.22, y1: 0, y2: 0, stroke: "#FFFFFF", "stroke-width": 0.07 }, bg);
+    } // M. Tembo - 9/30/26
   }
 
   function render() {
+    stopAnim(); // any edit puts the board back to the formation. M. Tembo - 9/30/26
     drawPlay(svg, play, { handles: tool === "move" });
     $("titleView").textContent = play.name || "Untitled play";
     const fmt = { "11": "11-man", "7": "7v7", "5": "5v5 flag" }[play.format];
@@ -616,6 +754,8 @@
     $("btnDelete").disabled = !savedId;
     renderTree();
     renderPlaybookTools(); // M. Tembo - 9/30/26
+    renderAutoName(); // M. Tembo - 10/10/26
+    renderPersonnel(); // M. Tembo - 10/10/26
     updateHint();
   }
 
@@ -653,16 +793,16 @@
       b.textContent = name;
       b.disabled = !sel;
       if (mine) b.className = "mine"; // M. Tembo - 9/28/26
-      b.addEventListener("click", () => applyShape(pts)); // M. Tembo - 9/28/26
+      b.addEventListener("click", () => applyShape(pts, name)); // I pass the name so the auto namer knows the route. M. Tembo - 10/10/26
       box.appendChild(b);
     }; // M. Tembo - 9/28/26
     Object.keys(TREE).forEach(name => add(name, TREE[name], false)); // M. Tembo - 9/28/26
-    myRoutes.slice().sort((x, y) => x.name.localeCompare(y.name)).forEach(r => add(r.name, r.pts, true)); // M. Tembo - 9/28/26
+    myRoutes.filter(r => r.kind !== "concept").sort((x, y) => x.name.localeCompare(y.name)).forEach(r => add(r.name, r.pts, true)); // named combos live with my routes but aren't routes. M. Tembo - 10/10/26
     const a = sel && play.assign[sel.id]; // M. Tembo - 9/28/26
     $("btnSaveRoute").disabled = !(a && a.points && a.points.length); // M. Tembo - 9/28/26
   }
 
-  function applyShape(shape) { // M. Tembo - 9/28/26
+  function applyShape(shape, name) { // M. Tembo - 10/10/26
     const pl = play.players.find(p => p.id === selected);
     if (!pl) return;
     pushHistory();
@@ -672,14 +812,14 @@
     const [bx, by] = routeStart(pl); // M. Tembo - 9/28/26
     const out = bx < MID ? -1 : 1; // outside is toward the nearer sideline from where the route starts.
     const pts = shape.map(([o, d]) => [clamp(snap(bx + o * out), 0.5, W - 0.5), clamp(snap(by - d), 0.5, H - 0.5)]); // M. Tembo - 9/28/26
-    play.assign[pl.id] = { points: pts, motion: mo, block: bl, drop: prev && prev.drop ? prev.drop : [], dropSteps: prev ? prev.dropSteps || 0 : 0, carry: false, read: prev ? prev.read : 0 }; // M. Tembo - 9/30/26
+    play.assign[pl.id] = { points: pts, motion: mo, block: bl, drop: prev && prev.drop ? prev.drop : [], dropSteps: prev ? prev.dropSteps || 0 : 0, dropKind: prev ? prev.dropKind : undefined, dropDir: prev ? prev.dropDir : undefined, carry: false, read: prev ? prev.read : 0, routeName: name || "" }; // M. Tembo - 10/10/26
     drawing = null;
     render();
   }
 
   // I save the selected player's drawn route relative to where it starts, in outside/downfield yards,
   // so it breaks the right way when I apply it to a player on either side. M. Tembo - 9/28/26
-  function lsRoutesSave() { try { localStorage.setItem(LS_ROUTES, JSON.stringify(myRoutes)); return true; } catch (e) { return false; } } // M. Tembo - 9/28/26
+  function lsRoutesSave() { return lsWrite(LS_ROUTES, myRoutes); } // I record removals and queue a GitHub push. M. Tembo - 9/30/26
   async function saveRoute() { // M. Tembo - 9/28/26
     const pl = play.players.find(p => p.id === selected);
     const a = pl && play.assign[pl.id];
@@ -690,7 +830,7 @@
     const [bx, by] = routeStart(pl);
     const out = bx < MID ? -1 : 1;
     const pts = a.points.map(([x, y]) => [Math.round((x - bx) * out * 2) / 2, Math.round((by - y) * 2) / 2]);
-    const existing = myRoutes.find(r => r.name.toLowerCase() === name.toLowerCase());
+    const existing = myRoutes.find(r => r.kind !== "concept" && r.name.toLowerCase() === name.toLowerCase()); // M. Tembo - 10/10/26
     const doc = { id: existing ? existing.id : uid(), name, pts, updatedAt: new Date().toISOString() };
     if (db) {
       try { await db.collection("routes").doc(doc.id).set(doc); }
@@ -707,12 +847,12 @@
   function renderMyRoutes() { // M. Tembo - 9/28/26
     const ul = $("myRoutes");
     ul.innerHTML = "";
-    myRoutes.slice().sort((x, y) => x.name.localeCompare(y.name)).forEach(r => {
+    myRoutes.slice().sort((x, y) => (x.kind === "concept") - (y.kind === "concept") || x.name.localeCompare(y.name)).forEach(r => { // routes first, then my named combos. M. Tembo - 10/10/26
       const li = document.createElement("li");
-      const n = document.createElement("span"); n.textContent = r.name;
+      const n = document.createElement("span"); n.textContent = r.kind === "concept" ? r.name + " (combo: " + comboText(r.play) + (r.back ? "; back side " + comboText(r.back) : "") + ")" : r.name; // M. Tembo - 10/10/26
       const b = document.createElement("button"); b.textContent = "Remove"; b.className = "danger";
       b.setAttribute("aria-label", "Remove " + r.name + " from the route tree");
-      b.addEventListener("click", () => confirmThen("Remove the saved route \"" + r.name + "\" from the route tree? Plays that already use it keep their drawing.", "Remove", async () => {
+      b.addEventListener("click", () => confirmThen(r.kind === "concept" ? "Remove the route combo name \"" + r.name + "\" (" + comboText(r.play) + ")? Plays already saved keep their names." : "Remove the saved route \"" + r.name + "\" from the route tree? Plays that already use it keep their drawing.", "Remove", async () => { // M. Tembo - 10/10/26
         if (db) {
           try { await db.collection("routes").doc(r.id).delete(); } catch (e) { $("routeMsg").textContent = "Couldn't remove it. Try again."; return; }
         } else {
@@ -734,6 +874,7 @@
 
   let drag = null;
   svg.addEventListener("pointerdown", (e) => {
+    if (anim) { render(); return; } // a tap while the play runs (or after it ends) just resets the board. M. Tembo - 9/30/26
     const handle = e.target.getAttribute && e.target.getAttribute("data-handle");
     const markId = e.target.getAttribute && e.target.getAttribute("data-mark"); // M. Tembo - 9/30/26
     const g = e.target.closest && e.target.closest("[data-player]");
@@ -766,11 +907,12 @@
         const pl = play.players.find(p => p.id === pid);
         const a = assignOf(pl);
         selected = pid;
-        const slot = kind === "motion" ? "motion" : kind === "block" ? "block" : "points";
+        const slot = kind === "motion" ? "motion" : kind === "block" ? "block" : kind === "drop" ? "drop" : "points"; // M. Tembo - 9/30/26
         // When I redraw motion or a block, whatever follows it starts from the new end point. M. Tembo - 9/30/26
-        const start = slot === "motion" ? [pl.x, pl.y] : slot === "block" ? lastPt(a.drop, lastPt(a.motion, [pl.x, pl.y])) : routeStart(pl);
+        if (slot === "drop") { a.dropSteps = 0; a.dropKind = undefined; a.dropDir = undefined; } // a hand-drawn drop is read by its shape. M. Tembo - 10/10/26
+        const start = slot === "motion" ? [pl.x, pl.y] : slot === "drop" ? lastPt(a.motion, [pl.x, pl.y]) : slot === "block" ? lastPt(a.drop, lastPt(a.motion, [pl.x, pl.y])) : routeStart(pl); // M. Tembo - 9/30/26
         a[slot] = [];
-        if (slot === "points") a.carry = kind === "run";
+        if (slot === "points") { a.carry = kind === "run"; a.routeName = ""; } // M. Tembo - 10/10/26
         freeDraw = { pid, slot, start, pts: a[slot] };
       } else {
         const mk2 = { id: uid(), kind, pts: [[r1(fx), r1(fy)]] };
@@ -802,6 +944,7 @@
         pushHistory();
         const a = play.assign[drawing]; // M. Tembo - 9/28/26
         (tool === "motion" ? a.motion : tool === "block" ? a.block : a.points).push([snap(fx), snap(fy)]); // M. Tembo - 9/28/26
+        if (tool === "route") a.routeName = ""; // a hand-built route gets named by its shape. M. Tembo - 10/10/26
         render();
       }
       return;
@@ -892,7 +1035,7 @@
       const o = document.createElement("option"); o.value = play.formation; o.textContent = play.formation + " (custom)"; s.appendChild(o);
     }
     s.value = play.formation;
-    $("btnRemoveForm").hidden = !isMine(play.format, play.formation); // M. Tembo - 9/28/26
+    renderFormTools(); // M. Tembo - 10/10/26
   }
   function syncForm() {
     $("fName").value = play.name;
@@ -902,7 +1045,9 @@
     $("fNotes").value = play.notes;
   }
 
-  $("fName").addEventListener("input", e => { play.name = e.target.value; render(); });
+  $("fName").addEventListener("input", e => { play.name = e.target.value; play.nameAuto = !play.name.trim(); render(); }); // typing my own name stops the auto name; clearing it brings it back. M. Tembo - 10/10/26
+  $("btnAutoName").addEventListener("click", () => { play.nameAuto = true; play.name = ""; render(); }); // M. Tembo - 10/10/26
+  $("btnNameCombo").addEventListener("click", nameCombo); // M. Tembo - 10/10/26
   $("fConcept").addEventListener("input", e => { play.concept = e.target.value; render(); });
   $("fNotes").addEventListener("input", e => { play.notes = e.target.value; render(); });
   $("fFormat").addEventListener("change", e => {
@@ -916,7 +1061,7 @@
   $("fFormation").addEventListener("change", e => {
     pushHistory();
     play.formation = e.target.value;
-    $("btnRemoveForm").hidden = !isMine(play.format, play.formation); // M. Tembo - 9/28/26
+    renderFormTools(); // M. Tembo - 10/10/26
     // I keep assignments by label when the new formation has the same position.
     const oldAssign = {};
     play.players.forEach(p => { if (play.assign[p.id]) oldAssign[p.label] = { a: play.assign[p.id], x: p.x, y: p.y }; });
@@ -979,28 +1124,45 @@
   // I save plays in the artifact's shared database when it's available, so anyone I share
   // the playbook with sees the same plays. Otherwise I fall back to this browser.
   function lsLoad() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch (e) { return []; } }
-  function lsSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(plays)); return true; } catch (e) { return false; } }
+  function lsSave() { return lsWrite(LS_KEY, plays); } // M. Tembo - 9/30/26
 
   async function savePlay() {
     if (!play.name.trim()) { msg("Give the play a name, then save."); $("fName").focus(); return; }
-    const id = savedId || uid();
+    // I match on the play name, not on whichever play was last loaded. A new name is a new play;
+    // a name already in the book updates that play. M. Tembo - 10/3/26
+    const name = play.name.trim(); // M. Tembo - 10/3/26
+    const match = plays.find(p => (p.name || "").trim().toLowerCase() === name.toLowerCase()); // M. Tembo - 10/3/26
+    if (match && match.id !== savedId) { // M. Tembo - 10/3/26
+      confirmThen("A play named \"" + (match.name || name) + "\" (" + (match.formation || "") + ") is already in the playbook. Overwrite it with this one?", "Overwrite", () => writePlay(match.id, true)); // M. Tembo - 10/3/26
+      return; // M. Tembo - 10/3/26
+    } // M. Tembo - 10/3/26
+    await writePlay(match ? match.id : uid(), !!match); // M. Tembo - 10/3/26
+  }
+
+  async function writePlay(id, updating) { // M. Tembo - 10/3/26
     const doc = { ...clone(play), id, updatedAt: new Date().toISOString() };
+    const label = (updating ? "Updated " : "Saved ") + play.name; // M. Tembo - 10/3/26
     if (db) {
       try {
         await db.collection("plays").doc(id).set(doc);
-        savedId = id; play.id = id;
-        msg("Saved " + play.name + ".");
       } catch (e) {
         msg(e && e.code === "quota_exceeded" ? "The playbook is full. Delete a play to save new ones." : "Couldn't save. Check your connection and try again.");
         return;
       }
+      msg(label + ". Name cleared for your next play."); // M. Tembo - 10/3/26
     } else {
       const i = plays.findIndex(p => p.id === id);
       if (i >= 0) plays[i] = doc; else plays.push(doc);
-      savedId = id; play.id = id;
-      msg(lsSave() ? "Saved " + play.name + " in this browser." : "Couldn't save in this browser.");
-      renderBook();
+      ghNote = (updating ? "Update play: " : "Save play: ") + play.name; // M. Tembo - 10/3/26
+      if (!lsSave()) { msg("Couldn't save in this browser."); renderBook(); return; } // M. Tembo - 10/3/26
+      msg(label + (gh ? ", syncing to GitHub." : " in this browser.") + " Name cleared for your next play."); // M. Tembo - 10/3/26
     }
+    // I clear the name and detach the board from the saved play, so the next save can't overwrite it
+    // by accident. The drawing stays up as a starting point; I open the play from the list to edit it. M. Tembo - 10/3/26
+    play.name = ""; play.id = null; savedId = null; // M. Tembo - 10/3/26
+    $("fName").value = ""; // M. Tembo - 10/3/26
+    history = []; $("btnUndo").disabled = true; // M. Tembo - 10/3/26
+    renderBook(); // M. Tembo - 10/3/26
     render();
   }
   $("btnSave").addEventListener("click", savePlay);
@@ -1012,6 +1174,7 @@
       if (db) {
         try { await db.collection("plays").doc(p.id).delete(); } catch (e) { msg("Couldn't delete. Try again."); return; }
       } else {
+        ghNote = "Delete play: " + (p.name || "Untitled play"); // M. Tembo - 9/30/26
         plays = plays.filter(x => x.id !== p.id); lsSave(); renderBook();
       }
       msg("Deleted " + (p.name || "the play") + ".");
@@ -1040,6 +1203,8 @@
 
   function loadPlay(p) {
     play = normalize(clone(p)); // M. Tembo - 9/28/26
+    play.nameAuto = false; // a saved play keeps the name it was saved with. M. Tembo - 10/10/26
+    personnelNote = ""; // M. Tembo - 10/10/26
     savedId = p.id; selected = null; drawing = null; history = []; $("btnUndo").disabled = true;
     msg(""); $("schemeMsg").textContent = ""; // M. Tembo - 9/30/26
     syncForm(); render(); renderBook();
@@ -1162,6 +1327,7 @@
     const a = assignOf(qb);
     a.drop = [qy - LOS < 3 ? P(qx + 1.2 * s, LOS + 3) : P(qx + 0.7 * s, qy + 0.3)];
     a.dropSteps = 0; a.block = []; a.points = []; a.carry = false;
+    a.dropKind = "mesh"; // M. Tembo - 10/10/26
   } // M. Tembo - 9/30/26
 
   // QB drops. Under center the set point is measured from the line; in the gun I add depth to his alignment. M. Tembo - 9/30/26
@@ -1170,12 +1336,20 @@
     if (!qb) return;
     pushHistory();
     const a = assignOf(qb), [qx, qy] = startOf(qb), under = qy - LOS < 3;
-    if (kind === "clear") { a.drop = []; a.dropSteps = 0; render(); return; }
+    if (kind === "clear") { a.drop = []; a.dropSteps = 0; a.dropKind = undefined; a.dropDir = undefined; render(); return; } // M. Tembo - 10/10/26
+    a.dropKind = kind; a.dropDir = kind === "boot" ? -side : side; // the namer reads these for 60/70/80/90 and 0/1. M. Tembo - 10/10/26
     if (kind === "pa") {
       // Play action: I open to the play side, show the fake at the mesh, then finish at the set point.
       a.drop = under ? [P(qx + 1.6 * side, LOS + 3.2), P(qx + 2.2 * side, LOS + 7)] : [P(qx + 1 * side, qy + 0.3), P(qx + 1.2 * side, qy + 2.5)];
       a.dropSteps = 0;
-    } else {
+    } else if (kind === "roll" || kind === "boot") { // M. Tembo - 9/30/26
+      // Rollout goes to the play side. Bootleg fakes the run to the play side, then breaks the other way.
+      // Either way the QB finishes outside the tackle box on the move, about 5 yards outside the tackle.
+      const d = kind === "roll" ? side : -side, L = lineX(), t = d > 0 ? L.RT : L.LT;
+      if (kind === "roll") a.drop = under ? [P(qx + 1 * d, LOS + 4), P(qx + 4 * d, LOS + 6.5), P(t + 5 * d, LOS + 6)] : [P(qx + 1.5 * d, qy + 1.2), P(t + 5 * d, qy + 1)];
+      else a.drop = under ? [P(qx - 1.4 * d, LOS + 3), P(qx + 2.5 * d, LOS + 6), P(t + 5 * d, LOS + 5.5)] : [P(qx - 1 * d, qy + 0.3), P(qx + 2.5 * d, qy + 1.5), P(t + 5 * d, qy + 0.5)];
+      a.dropSteps = 0;
+    } else { // M. Tembo - 9/30/26
       const depth = under ? { quick: 3, "3": 5, "5": 7, "7": 9 }[kind] : qy - LOS + { quick: 0.5, "3": 1.5, "5": 3, "7": 4.5 }[kind];
       a.drop = [P(qx, LOS + depth)];
       a.dropSteps = { quick: 1, "3": 3, "5": 5, "7": 7 }[kind];
@@ -1198,7 +1372,7 @@
       if (qb && qb !== c) {
         const [qx, qy] = startOf(qb), qa = assignOf(qb);
         qa.drop = [qy - LOS < 3 ? P(qx + 0.8 * d, LOS + 2.6) : P(qx + 0.5 * d, qy + 0.3)];
-        qa.dropSteps = 0; qa.block = []; qa.points = []; qa.carry = false;
+        qa.dropSteps = 0; qa.block = []; qa.points = []; qa.carry = false; qa.dropKind = "mesh"; // M. Tembo - 10/10/26
         play.marks.push({ id: uid(), kind: "pitch", tag: "pitch", pts: [qa.drop[0], catchPt] });
       }
     } else {
@@ -1206,6 +1380,7 @@
       setRun(c, [P(gx, LOS + 1.3), P(gx, LOS - 5)]);
       qbMesh(c, gx);
     }
+    play.runCall = (gap === "toss" ? "Toss " : gap + " Gap ") + (d > 0 ? "Right" : "Left"); // M. Tembo - 10/10/26
     $("schemeMsg").textContent = (gap === "toss" ? "Toss " : gap + " gap ") + (d > 0 ? "right" : "left") + " for " + c.label + ".";
     render();
   } // M. Tembo - 9/30/26
@@ -1254,7 +1429,7 @@
       const ax = gapX("A", d), [sx, sy] = startOf(k.c);
       k.run(ax, [P(sx, sy - 0.5), P(ax, LOS + 1.3), P(ax, LOS - 5)]);
       const qb = byLabel("QB");
-      if (qb && qb !== k.c) { const [qx, qy] = startOf(qb), qa = assignOf(qb); qa.drop = [qy - LOS < 3 ? P(qx, LOS + 4.5) : P(qx, qy + 1)]; qa.dropSteps = 0; } // QB shows pass, then hands it off
+      if (qb && qb !== k.c) { const [qx, qy] = startOf(qb), qa = assignOf(qb); qa.drop = [qy - LOS < 3 ? P(qx, LOS + 4.5) : P(qx, qy + 1)]; qa.dropSteps = 0; qa.dropKind = "mesh"; } // QB shows pass, then hands it off. M. Tembo - 10/10/26
     },
     "RB screen": (ol, d, k) => {
       setBlock(ol[k.bs.G], k.set(ol[k.bs.G])); setBlock(ol[k.bs.T], k.set(ol[k.bs.T]));
@@ -1298,6 +1473,7 @@
       run: (aimX, pts) => { setRun(c, pts || [P(aimX, LOS + 1.3), P(aimX, LOS - 5)]); qbMesh(c, aimX); }
     };
     SCHEMES[name](ol, d, k);
+    if (!NO_CARRIER.includes(name)) play.runCall = name + (d > 0 ? " Right" : " Left"); // M. Tembo - 10/10/26
     $("schemeMsg").textContent = name + " " + (d > 0 ? "right" : "left") + (c && !["Pass pro", "Slide pro"].includes(name) ? ", " + c.label + (name === "RB screen" ? " on the screen." : " carries.") : ".");
     if (!play.concept) { play.concept = name + (d > 0 ? " right" : " left"); $("fConcept").value = play.concept; }
     render();
@@ -1312,7 +1488,7 @@
   function renderPlaybookTools() { // M. Tembo - 9/30/26
     const qb = byLabel("QB"), c = carrier(), line = hasLine();
     document.querySelectorAll("[data-drop]").forEach(b => b.disabled = !qb);
-    $("dropHint").textContent = qb ? (startOf(qb)[1] - LOS < 3 ? "QB is under center. Play action opens to the play side below." : "QB is in the gun. Play action opens to the play side below.") : "This formation has no QB.";
+    $("dropHint").textContent = qb ? (startOf(qb)[1] - LOS < 3 ? "QB is under center." : "QB is in the gun.") + " Play action and rollout go to the play side below; bootleg fakes there and breaks the other way." : "This formation has no QB."; // M. Tembo - 9/30/26
     document.querySelectorAll("[data-run]").forEach(b => b.disabled = !c);
     $("runHint").textContent = c ? "Ball carrier: " + c.label + ". Select a different player to change it." : "Add a back, or select the player who carries the ball.";
     document.querySelectorAll("#schemeBtns button").forEach(b => b.disabled = !line);
@@ -1327,9 +1503,566 @@
   document.querySelectorAll("[data-run]").forEach(b => b.addEventListener("click", () => applyRun(b.dataset.run))); // M. Tembo - 9/30/26
   document.querySelectorAll("[data-side]").forEach(b => b.addEventListener("click", () => { setSide(+b.dataset.side); render(); })); // M. Tembo - 9/30/26
 
+  // ---------- Auto play names ----------
+  // I name a play the way I call it: formation, then protection, then motions, then the route combo.
+  // A run stops after the scheme. Formation words come from where the players line up:
+  //   Spread    shotgun, 2 receivers each side
+  //   Reo/Leo   3 receivers right/left
+  //   Rick/Lyn  3 receivers with 2 right/left and 2 backs
+  //   Right/Left  2 receivers and the tight end to the called side
+  //   Bunch     added when the 3 receivers are tight to each other
+  // Protection: 90 quick, 60 three step (5 under center), 70 five step (7 under center), 80 rollout.
+  // The last digit is the side the play goes: 0 right, 1 left. M. Tembo - 10/10/26
+  const ROUTE_TYPE = { // tree names to the route type the combos match on. M. Tembo - 10/10/26
+    "Flat": "flat", "Slant": "slant", "Hitch": "hitch", "Out": "out", "Quick out": "out", "Dig": "dig", "Curl": "curl",
+    "Comeback": "comeback", "Post": "post", "Corner": "corner", "Go": "go", "Wheel": "wheel", "Drag": "drag", "Seam": "seam",
+    "Out n up": "go", "Hitch and go": "go", "Zig in": "zig", "Zig out": "zig"
+  }; // M. Tembo - 10/10/26
+  // Stock combos, playside routes listed outside to inside. "a|b" accepts either. My own named combos are checked first. M. Tembo - 10/10/26
+  const STOCK_COMBOS = [ // M. Tembo - 10/10/26
+    { name: "Mesh", play: ["drag"], back: ["drag"] },
+    { name: "Semi", play: ["dig", "corner"] },
+    { name: "Smash", play: ["hitch|curl", "corner"] },
+    { name: "Flood", play: ["go|seam", "out|corner", "flat"] },
+    { name: "Stick", play: ["go|seam", "hitch|out", "flat"] },
+    { name: "Dagger", play: ["dig", "go|seam"] },
+    { name: "Levels", play: ["dig", "drag"] },
+    { name: "Curl Flat", play: ["curl|hitch", "flat"] },
+    { name: "Slant Flat", play: ["slant", "flat"] },
+    { name: "Verts", play: ["go|seam", "go|seam"] }
+  ]; // M. Tembo - 10/10/26
+  const cap = s => s.replace(/\b\w/g, c => c.toUpperCase()); // M. Tembo - 10/10/26
+  function comboText(list) { return (list || []).map(cap).join(", ") || "none"; } // M. Tembo - 10/10/26
+
+  function ballX() { const c = byLabel("C"); return c ? c.x : MID; } // M. Tembo - 10/10/26
+
+  // I read a hand-drawn or edited route by its shape, in outside/downfield yards from where it starts. M. Tembo - 10/10/26
+  function routeType(pl, a) { // M. Tembo - 10/10/26
+    if (a.routeName) return ROUTE_TYPE[a.routeName] || a.routeName.toLowerCase();
+    const [bx, by] = routeStart(pl), out = bx < MID ? -1 : 1;
+    const rel = a.points.map(([x, y]) => [(x - bx) * out, by - y]);
+    // A drawn route that follows one of my saved routes, or a stock tree route, takes that name. M. Tembo - 10/10/26
+    const shaped = shapeMatch(rel); // M. Tembo - 10/10/26
+    if (shaped) return shaped; // M. Tembo - 10/10/26
+    const [eu, ev] = rel[rel.length - 1], prev = rel.length > 1 ? rel[rel.length - 2] : [0, 0];
+    const du = eu - prev[0], dv = ev - prev[1], maxV = Math.max(...rel.map(q => q[1]));
+    if (maxV >= 12) {
+      if (ev < maxV - 2) return du >= 0 ? "comeback" : "curl";
+      if (rel.some(q => q[0] > 3 && q[1] < 5) && Math.abs(eu - rel.find(q => q[0] > 3)[0]) < 2.5 && pl.y - LOS >= 2.5) return "wheel";
+      return eu > 3 ? "corner" : eu < -3 ? "post" : "go";
+    }
+    if (maxV >= 5.5) {
+      if (ev < maxV - 1.5) return du >= 0 ? "comeback" : "curl";
+      if (Math.abs(du) > Math.abs(dv)) return du < 0 ? "dig" : "out";
+      return eu < -3 ? "post" : eu > 3 ? "corner" : "go";
+    }
+    if (eu < -3.5) return ev <= 2.5 ? "drag" : "slant";
+    if (eu > 3) return ev <= 2.5 ? "flat" : "out";
+    return "hitch";
+  } // M. Tembo - 10/10/26
+
+  // I resample both paths to the same number of points and compare them; an average gap under about
+  // a yard and a half counts as the same route. My saved routes are checked before the stock tree. M. Tembo - 10/10/26
+  function resample(pts, n) { // M. Tembo - 10/10/26
+    const path = [[0, 0], ...pts], seg = [];
+    let total = 0;
+    for (let i = 1; i < path.length; i++) { const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); seg.push(d); total += d; }
+    if (!total) return null;
+    const outPts = [];
+    for (let k = 0; k < n; k++) {
+      let t = total * k / (n - 1), i = 0;
+      while (i < seg.length - 1 && t > seg[i]) { t -= seg[i]; i++; }
+      const s = seg[i] ? Math.min(1, t / seg[i]) : 0;
+      outPts.push([path[i][0] + (path[i + 1][0] - path[i][0]) * s, path[i][1] + (path[i + 1][1] - path[i][1]) * s]);
+    }
+    return outPts;
+  } // M. Tembo - 10/10/26
+  function shapeMatch(rel) { // M. Tembo - 10/10/26
+    const a = resample(rel, 16);
+    if (!a) return "";
+    const cands = [...myRoutes.filter(r => r.kind !== "concept" && r.pts && r.pts.length).map(r => [r.name.toLowerCase(), r.pts]), ...Object.keys(TREE).map(k => [ROUTE_TYPE[k] || k.toLowerCase(), TREE[k]])];
+    let best = "", bestD = 1.5;
+    cands.forEach(([name, pts]) => {
+      const b = resample(pts, 16);
+      if (!b) return;
+      const d = a.reduce((s, q, i) => s + Math.hypot(q[0] - b[i][0], q[1] - b[i][1]), 0) / a.length;
+      if (d < bestD) { bestD = d; best = name; }
+    });
+    return best;
+  } // M. Tembo - 10/10/26
+
+  function formationWord() { // M. Tembo - 10/10/26
+    const bx = ballX(), qb = byLabel("QB"), gun = qb && qb.y - LOS >= 3;
+    const L = lineX(), hasOL = OL_LABELS.some(l => byLabel(l));
+    const others = play.players.filter(p => !OL_LABELS.includes(p.label) && p.label !== "QB");
+    // A back lines up in the backfield inside the tackle box. A receiver who's just off the ball out wide
+    // is still a receiver, so only two real backs make Rick/Lyn. M. Tembo - 10/10/26
+    const inBox = p => p.y - LOS >= 2.5 && Math.abs(p.x - bx) <= 5.5; // M. Tembo - 10/10/26
+    const backs = others.filter(inBox); // M. Tembo - 10/10/26
+    const rec = others.filter(p => !inBox(p)); // M. Tembo - 10/10/26
+    const isTE = p => hasOL && p.y <= LOS + 1.6 && ((p.x > bx && p.x - L.RT > 0.8 && p.x - L.RT < 3.5) || (p.x < bx && L.LT - p.x > 0.8 && L.LT - p.x < 3.5));
+    const right = rec.filter(p => p.x > bx), left = rec.filter(p => p.x < bx);
+    let word = "", strong = null;
+    const stacked = !gun && backs.length === 2 && backs.every(p => Math.abs(p.x - bx) <= 1.5); // M. Tembo - 10/10/26
+    if (stacked) { const te = rec.find(isTE); word = te ? (te.x > bx ? "I-Right" : "I-Left") : "I"; } // backs stacked behind the QB under center. M. Tembo - 10/10/26
+    else if (gun && backs.length === 2 && rec.length === 3 && (right.length === 2 || left.length === 2)) word = right.length === 2 ? "Rick" : "Lyn"; // Rick/Lyn is a shotgun word only. M. Tembo - 10/10/26
+    else if (right.length >= 3 || left.length >= 3) {
+      strong = right.length >= 3 ? right : left;
+      const r = strong === right;
+      word = strong.some(isTE) ? (r ? "Right" : "Left") : (r ? "Reo" : "Leo");
+    } else if (gun && right.length === 2 && left.length === 2) word = "Spread";
+    else word = play.formation; // anything my terminology doesn't cover keeps its formation name
+    if (strong) { const xs = strong.map(p => p.x); if (Math.max(...xs) - Math.min(...xs) <= 4.5) word += " Bunch"; }
+    return word;
+  } // M. Tembo - 10/10/26
+
+  // Which way the play goes: the rollout direction, else read 1's side, else the side with more routes, else my play side. M. Tembo - 10/10/26
+  function playSide(qa, routes) { // M. Tembo - 10/10/26
+    if (qa && (qa.dropKind === "roll" || qa.dropKind === "boot") && qa.dropDir) return qa.dropDir;
+    if (qa && !qa.dropKind && qa.drop && qa.drop.length) {
+      const qb = byLabel("QB"), [qx] = startOf(qb), dx = qa.drop[qa.drop.length - 1][0] - qx;
+      if (Math.abs(dx) > 3) return Math.sign(dx);
+    }
+    const r1 = routes.find(r => r.read === 1);
+    if (r1) return r1.side;
+    const n = s => routes.filter(r => r.side === s).length;
+    return n(1) > n(-1) ? 1 : n(-1) > n(1) ? -1 : side;
+  } // M. Tembo - 10/10/26
+
+  function protection(qa, dir) { // M. Tembo - 10/10/26
+    const qb = byLabel("QB");
+    if (!qb) return "";
+    const [qx, qy] = startOf(qb), under = qy - LOS < 3, digit = dir > 0 ? 0 : 1;
+    let k = qa && qa.dropKind;
+    if (!qa || !qa.drop || !qa.drop.length) k = "quick"; // no drop: from the gun he catches it, flips his hips and fires
+    else if (!k) {
+      // A hand-drawn drop: a big move sideways is a rollout, otherwise I go by how deep he sets.
+      const [ex, ey] = qa.drop[qa.drop.length - 1];
+      if (Math.abs(ex - qx) > 3) k = "roll";
+      else { const depth = under ? ey - LOS : ey - qy; k = under ? (depth <= 4 ? "quick" : depth <= 6.5 ? "5" : "7") : (depth <= 0.8 ? "quick" : depth <= 2 ? "3" : "5"); }
+    }
+    if (k === "pa") return "PA";
+    const base = k === "roll" || k === "boot" ? 80 : k === "quick" ? 90 : under ? (k === "3" ? 90 : k === "5" ? 60 : 70) : (k === "3" ? 60 : 70);
+    return String(base + digit);
+  } // M. Tembo - 10/10/26
+
+  function motionWords() { // M. Tembo - 10/10/26
+    const bx = ballX(), words = [];
+    play.players.forEach(pl => {
+      const mo = (play.assign[pl.id] || {}).motion || [];
+      if (!mo.length) return;
+      const [ex] = mo[mo.length - 1], deep = Math.max(...mo.map(q => q[1])) - LOS > 2.5;
+      const crosses = mo.some(q => Math.sign(q[0] - bx) !== Math.sign(pl.x - bx)); // crossing at any point counts, so an orbit that comes back is still an orbit. M. Tembo - 10/10/26
+      // In and back out to about where he started, without crossing the ball, is a Shuffle. M. Tembo - 10/10/26
+      const inner = Math.min(...mo.map(q => Math.abs(q[0] - bx))), back = Math.abs(Math.abs(ex - bx) - Math.abs(pl.x - bx)) < 2; // M. Tembo - 10/10/26
+      const shuffle = !crosses && back && Math.abs(pl.x - bx) - inner >= 2; // M. Tembo - 10/10/26
+      // Across the ball shallow is Jet; coming back to his own side after crossing adds Orbit (Jet Orbit).
+      // Deep behind the QB is Orbit either way. M. Tembo - 10/11/26
+      const returned = crosses && Math.sign(ex - bx) === Math.sign(pl.x - bx); // M. Tembo - 10/11/26
+      const across = deep ? "Orbit" : returned ? "Jet Orbit" : "Jet"; // M. Tembo - 10/11/26
+      words.push(pl.label + " " + (crosses ? across : shuffle ? "Shuffle" : Math.abs(ex - bx) < Math.abs(pl.x - bx) ? "In" : "Out")); // M. Tembo - 10/11/26
+    });
+    return words;
+  } // M. Tembo - 10/10/26
+
+  function matchList(pattern, list) { return pattern.length === list.length && pattern.every((p, i) => p.split("|").includes(list[i])); } // M. Tembo - 10/10/26
+
+  // The whole call: name plus the route combo it read, so I can name an unnamed combo. M. Tembo - 10/10/26
+  function autoCall() { // M. Tembo - 10/10/26
+    const parts = [formationWord()];
+    const qb = byLabel("QB"), qa = qb ? play.assign[qb.id] : null;
+    const carrierAssign = Object.entries(play.assign).find(([id, a]) => a.carry && (!qb || id !== qb.id));
+    const readSet = Object.values(play.assign).some(a => a.read === 1);
+    if (carrierAssign && !readSet) {
+      // A run reads formation, motions, the run call, then each receiver's route by player. M. Tembo - 10/10/26
+      parts.push(...motionWords()); // M. Tembo - 10/10/26
+      parts.push(play.runCall || "Run " + (((carrierAssign[1].points.slice(-1)[0] || [MID])[0] > ballX()) ? "Right" : "Left"));
+      play.players.forEach(pl => { // M. Tembo - 10/10/26
+        const a = play.assign[pl.id];
+        if (OL_LABELS.includes(pl.label) || pl.label === "QB" || !a || a.carry || !a.points || !a.points.length) return;
+        parts.push(pl.label + " " + cap(routeType(pl, a)));
+      }); // M. Tembo - 10/10/26
+      return { name: parts.join(" "), combo: null };
+    }
+    const bx = ballX();
+    const routes = play.players.filter(p => !OL_LABELS.includes(p.label) && p.label !== "QB").map(pl => {
+      const a = play.assign[pl.id];
+      if (!a || !a.points || !a.points.length || a.carry) return null;
+      const [sx] = startOf(pl);
+      return { label: pl.label, side: sx > bx ? 1 : -1, wide: Math.abs(sx - bx), type: routeType(pl, a), read: a.read };
+    }).filter(Boolean);
+    if (!routes.length && !(qa && qa.drop && qa.drop.length)) return { name: parts[0], combo: null };
+    const dir = playSide(qa, routes), prot = protection(qa, dir);
+    if (prot) parts.push(prot);
+    parts.push(...motionWords());
+    const bySide = s => routes.filter(r => r.side === s).sort((x, y) => y.wide - x.wide).map(r => r.type);
+    let ps = bySide(dir), bs = bySide(-dir);
+    // The lowest read number on each side is that side's main route, so suggestions start from it. M. Tembo - 10/10/26
+    const primary = s => { const r = routes.filter(q => q.side === s && q.read > 0).sort((x, y) => x.read - y.read)[0]; return r ? r.type : null; }; // M. Tembo - 10/10/26
+    let pPrim = primary(dir), bPrim = primary(-dir); // M. Tembo - 10/10/26
+    if (prot.startsWith("8")) {
+      // On 80 the back side always runs a drag (closest) and a takeoff or post (outside), so those are implied.
+      bs = bs.filter(t => !["drag", "go", "post", "seam"].includes(t));
+    }
+    if (!ps.length && bs.length) { ps = bs; bs = []; pPrim = bPrim; bPrim = null; } // M. Tembo - 10/10/26
+    // My named combos describe one side, so I match them on each side separately. M. Tembo - 10/10/26
+    const mine = myRoutes.filter(r => r.kind === "concept").map(r => ({ name: r.name, play: r.play, back: null })); // M. Tembo - 10/10/26
+    const hit = [...mine, ...STOCK_COMBOS].find(c => matchList(c.play, ps) && (!c.back || matchList(c.back, bs)));
+    const comboName = hit ? hit.name : ps.map(cap).join(" ");
+    if (comboName) parts.push(comboName);
+    // The backside reads after the playside, unless the combo already covers both sides (Mesh). M. Tembo - 10/10/26
+    let backHit = null, backName = ""; // M. Tembo - 10/10/26
+    if (bs.length && !(hit && hit.back)) { // M. Tembo - 10/10/26
+      backHit = [...mine, ...STOCK_COMBOS.filter(c => !c.back)].find(c => matchList(c.play, bs)); // M. Tembo - 10/10/26
+      backName = backHit ? backHit.name : bs.map(cap).join(" "); // M. Tembo - 10/10/26
+      parts.push(backName); // M. Tembo - 10/10/26
+    } // M. Tembo - 10/10/26
+    return { name: parts.join(" "), combo: { play: ps, back: bs, named: !!hit, backNamed: !bs.length || !!(hit && hit.back) || !!backHit, name: comboName, playPrimary: pPrim, backPrimary: bPrim } }; // M. Tembo - 10/10/26
+  } // M. Tembo - 10/10/26
+
+  function renderAutoName() { // M. Tembo - 10/10/26
+    let call;
+    try { call = autoCall(); } catch (e) { call = { name: "", combo: null }; }
+    if (play.nameAuto !== false && call.name) {
+      play.name = call.name;
+      if (document.activeElement !== $("fName")) $("fName").value = call.name;
+    }
+    const c = call.combo;
+    $("autoHint").textContent = "Auto name: " + (call.name || "draw the play first") + "." +
+      (c && c.play.length && !c.named ? " The playside combo (" + comboText(c.play) + ") has no name yet. Name it below and I'll use it from now on." : // M. Tembo - 10/10/26
+        c && !c.backNamed ? " The backside combo (" + comboText(c.back) + ") has no name yet. Name it below and I'll use it from now on." : "") + // M. Tembo - 10/10/26
+      (play.nameAuto === false ? " I'm keeping the name typed above." : "");
+    $("btnNameCombo").disabled = !(c && c.play.length && (!c.named || !c.backNamed)); // M. Tembo - 10/10/26
+    renderComboIdeas(c); // M. Tembo - 10/10/26
+    $("btnAutoName").hidden = play.nameAuto !== false;
+  } // M. Tembo - 10/10/26
+
+  // Naming a combo saves its playside routes (and any backside routes that aren't implied) with my saved routes,
+  // so it syncs the same way they do. Saving a name that already exists replaces it. M. Tembo - 10/10/26
+  async function nameCombo() { // M. Tembo - 10/10/26
+    const call = autoCall(), c = call.combo, name = $("fComboName").value.trim();
+    if (!c || !c.play.length) return;
+    // I name the playside first; once it has a name, the button names the backside. M. Tembo - 10/10/26
+    const routes = !c.named ? c.play : !c.backNamed ? c.back : c.play; // M. Tembo - 10/10/26
+    if (!name) { $("autoHint").textContent = "Type a name for the combo first."; $("fComboName").focus(); return; }
+    const existing = myRoutes.find(r => r.kind === "concept" && r.name.toLowerCase() === name.toLowerCase());
+    const doc = { id: existing ? existing.id : uid(), kind: "concept", name, pts: [], play: routes, back: null, updatedAt: new Date().toISOString() }; // a combo is one side's routes. M. Tembo - 10/10/26
+    if (db) {
+      try { await db.collection("routes").doc(doc.id).set(doc); }
+      catch (e) { $("autoHint").textContent = "Couldn't save the combo name. Try again."; return; }
+    } else {
+      myRoutes = myRoutes.filter(r => r.id !== doc.id).concat(doc);
+      if (!lsRoutesSave()) { $("autoHint").textContent = "Couldn't save in this browser."; return; }
+      renderMyRoutes();
+    }
+    $("fComboName").value = "";
+    render();
+    msg((existing ? "Updated " : "Named ") + "the combo " + comboText(routes) + " as " + name + "."); // M. Tembo - 10/10/26
+  } // M. Tembo - 10/10/26
+
+  // ---------- Personnel ----------
+  // I add, remove, relabel or switch players so I can build sets the stock formations don't have,
+  // like I-form with a second tight end in place of the fullback. Every change is one undo step. M. Tembo - 10/10/26
+  const ROLE_LABELS = { te: ["Y", "U", "Y2", "U2"], wr: ["X", "Z", "H", "W", "S", "F"], back: ["RB", "FB", "TB", "HB"] }; // M. Tembo - 10/10/26
+  const FIELD_COUNT = { "11": 11, "7": 7, "5": 5 }; // M. Tembo - 10/10/26
+  let personnelNote = ""; // the last personnel change, shown with the player count. M. Tembo - 10/10/26
+
+  function freeLabel(role, except) { // M. Tembo - 10/10/26
+    const used = new Set(play.players.filter(p => p !== except).map(p => p.label));
+    return ROLE_LABELS[role].find(l => !used.has(l)) || ROLE_LABELS[role][0] + (play.players.length + 1);
+  } // M. Tembo - 10/10/26
+  function spotFree(x, y, except) { return play.players.every(p => p === except || Math.hypot(p.x - x, p.y - y) >= 2); } // M. Tembo - 10/10/26
+
+  // A sensible spot for each role, skipping anywhere a player already stands. M. Tembo - 10/10/26
+  function spotFor(role, except) { // M. Tembo - 10/10/26
+    const bx = ballX(), L = lineX();
+    let cands = [];
+    if (role === "te") {
+      // On the line just outside a tackle, the open side first, then a wing outside that.
+      const hasTE = s => play.players.some(p => p !== except && p.y <= LOS + 1.6 && (s > 0 ? p.x - L.RT : L.LT - p.x) > 0.8 && (s > 0 ? p.x - L.RT : L.LT - p.x) < 3.5);
+      const order = hasTE(1) ? [-1, 1] : [1, -1];
+      order.forEach(s => cands.push([(s > 0 ? L.RT : L.LT) + 2.2 * s, LOS + 1]));
+      order.forEach(s => cands.push([(s > 0 ? L.RT : L.LT) + 4.4 * s, LOS + 2]));
+    } else if (role === "wr") {
+      // The side with fewer receivers first: a slot, then a wide spot.
+      const count = s => play.players.filter(p => p !== except && !OL_LABELS.includes(p.label) && p.label !== "QB" && p.y - LOS < 2.5 && Math.sign(p.x - bx) === s).length;
+      const order = count(1) <= count(-1) ? [1, -1] : [-1, 1];
+      [12, 19, 15, 8].forEach(d => order.forEach(s => cands.push([bx + d * s, LOS + (d === 19 ? 1 : 2)])));
+    } else {
+      // Behind the QB: under center the fullback and tailback spots, in the gun beside him.
+      const qb = byLabel("QB"), gun = qb && qb.y - LOS >= 3;
+      cands = gun ? [[bx + 2, LOS + 5.5], [bx - 2, LOS + 5.5], [bx, LOS + 7.5]] : [[bx, LOS + 4.5], [bx, LOS + 7], [bx + 2.5, LOS + 5.5], [bx - 2.5, LOS + 5.5]];
+    }
+    const pick = cands.find(([x, y]) => spotFree(x, y, except)) || cands[0];
+    return [clamp(pick[0], 1.5, W - 1.5), pick[1]];
+  } // M. Tembo - 10/10/26
+
+  function movePlayer(pl, x, y) { // his lines move with him, the same as dragging him. M. Tembo - 10/10/26
+    const dx = x - pl.x, dy = y - pl.y, a = play.assign[pl.id];
+    pl.x = x; pl.y = y;
+    if (a) { const sh = ([px, py]) => [px + dx, py + dy]; ["points", "motion", "block", "drop"].forEach(k => a[k] = (a[k] || []).map(sh)); }
+  } // M. Tembo - 10/10/26
+
+  function addPlayer(role) { // M. Tembo - 10/10/26
+    pushHistory();
+    const [x, y] = spotFor(role, null), pl = { id: uid(), label: freeLabel(role, null), x, y, shape: "o" };
+    play.players.push(pl);
+    selected = pl.id; drawing = null;
+    personnelNote = "Added " + pl.label + ". Drag him where you want him.";
+    render();
+  } // M. Tembo - 10/10/26
+
+  function changeRole(role) { // M. Tembo - 10/10/26
+    const pl = play.players.find(p => p.id === selected);
+    if (!pl) return;
+    pushHistory();
+    const old = pl.label;
+    pl.label = freeLabel(role, pl); pl.shape = "o";
+    const [x, y] = spotFor(role, pl);
+    movePlayer(pl, x, y);
+    personnelNote = old + " is now " + pl.label + ".";
+    render();
+  } // M. Tembo - 10/10/26
+
+  function renderPersonnel() { // M. Tembo - 10/10/26
+    const pl = play.players.find(p => p.id === selected);
+    $("playerEdit").hidden = !pl;
+    if (pl) {
+      $("playerHead").textContent = "Selected player: " + pl.label;
+      if (document.activeElement !== $("fLabel")) $("fLabel").value = pl.label;
+    }
+    const need = FIELD_COUNT[play.format], n = play.players.length;
+    const warn = need && n !== need ? n + " players on the field; " + need + " is a full side." : "";
+    $("personnelMsg").textContent = [personnelNote, warn].filter(Boolean).join(" ");
+  } // M. Tembo - 10/10/26
+
+  document.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => addPlayer(b.dataset.add))); // M. Tembo - 10/10/26
+  document.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", () => changeRole(b.dataset.role))); // M. Tembo - 10/10/26
+  $("fLabel").addEventListener("change", () => { // M. Tembo - 10/10/26
+    const pl = play.players.find(p => p.id === selected);
+    const v = $("fLabel").value.trim().toUpperCase().slice(0, 3);
+    if (!pl || !v || v === pl.label) { if (pl) $("fLabel").value = pl.label; return; }
+    pushHistory();
+    const dup = play.players.some(p => p !== pl && p.label === v);
+    pl.label = v;
+    personnelNote = dup ? "Another player is also " + v + ". Give each player his own label so names and blocking read right." : "";
+    render();
+  }); // M. Tembo - 10/10/26
+  $("btnRemovePlayer").addEventListener("click", () => { // M. Tembo - 10/10/26
+    // Removing takes the player and his lines off this play only. Undo puts him back.
+    const pl = play.players.find(p => p.id === selected);
+    if (!pl) return;
+    pushHistory();
+    play.players = play.players.filter(p => p !== pl);
+    delete play.assign[pl.id];
+    selected = null; drawing = null;
+    personnelNote = "Removed " + pl.label + ". Undo brings him back.";
+    render();
+  }); // M. Tembo - 10/10/26
+
+  // ---------- Combo name ideas ----------
+  // When a combo has no name, I offer names to tap: real concept names when the routes fit one, then words
+  // that describe the main route and the others. If most of my combo names share a first letter (mine are
+  // mostly S), I put words with that letter first. Tapping one fills the box; Name combo saves it. M. Tembo - 10/10/26
+  const ROUTE_WORDS = { // M. Tembo - 10/10/26
+    zig: ["Snap", "Spin", "Pivot", "Hook", "Rebound"], corner: ["Sky", "Flag", "Spire", "Pylon", "Crown"],
+    dig: ["Sink", "Square", "Shelf", "Bench", "Ledge"], slant: ["Slice", "Stab", "Knife", "Dart", "Blade"],
+    out: ["Speed", "Spot", "Swing", "Edge", "Chute"], post: ["Spear", "Steeple", "Spike", "Lance", "Tower"],
+    go: ["Streak", "Shot", "Stretch", "Burner", "Rocket"], seam: ["Split", "Stitch", "Rail", "Zipper", "Lane"],
+    drag: ["Sweep", "Scoot", "Sneak", "Shallow", "Glide"], curl: ["Settle", "Sit", "Hold", "Coil", "Park"],
+    hitch: ["Stop", "Stall", "Plant", "Brake", "Freeze"], flat: ["Slide", "Shoot", "Skid", "Arrow", "Bolt"],
+    wheel: ["Swirl", "Spiral", "Wagon", "Rotor", "Loop"], comeback: ["Stem", "Snapback", "Return", "Recoil", "Bounce"]
+  }; // M. Tembo - 10/10/26
+  // Concepts other staffs already call by name, when the routes fit. M. Tembo - 10/10/26
+  const KNOWN_IDEAS = [ // M. Tembo - 10/10/26
+    { name: "Whip", has: ["zig", "corner"] }, { name: "Sail", has: ["corner", "out"] }, { name: "Snag", has: ["corner", "hitch|curl", "flat"] },
+    { name: "Mills", has: ["post", "dig"] }, { name: "Spacing", has: ["hitch", "hitch"] }, { name: "Drive", has: ["drag", "dig"] },
+    { name: "Shallow", has: ["drag", "dig|curl"] }, { name: "Scissors", has: ["post", "corner"] }, { name: "Sluggo", has: ["slant", "go"] },
+    { name: "Hank", has: ["curl", "curl", "curl"] }, { name: "Seattle", has: ["seam", "seam"] }, { name: "Spot", has: ["corner", "curl|hitch", "flat"] }
+  ]; // M. Tembo - 10/10/26
+
+  function hasAll(list, need) { // every needed route shows up, each one used once. M. Tembo - 10/10/26
+    const pool = list.slice();
+    return need.every(n => { const i = pool.findIndex(t => n.split("|").includes(t)); if (i < 0) return false; pool.splice(i, 1); return true; });
+  } // M. Tembo - 10/10/26
+
+  function comboIdeas(types, main) { // M. Tembo - 10/10/26
+    const taken = new Set([...myRoutes.filter(r => r.kind === "concept").map(r => r.name), ...STOCK_COMBOS.map(c => c.name)].map(n => n.toLowerCase()));
+    const mineNames = myRoutes.filter(r => r.kind === "concept").map(r => r.name.trim());
+    const counts = {};
+    mineNames.forEach(n => { const k = n[0] && n[0].toUpperCase(); if (k) counts[k] = (counts[k] || 0) + 1; });
+    const fav = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    const letter = fav && counts[fav] >= 2 && counts[fav] / mineNames.length >= 0.5 ? fav : null;
+    const known = KNOWN_IDEAS.filter(k => hasAll(types, k.has)).map(k => k.name);
+    const order = [main, ...types.filter(t => t !== main)].filter(Boolean);
+    const words = [];
+    order.forEach(t => (ROUTE_WORDS[t] || []).forEach(w => words.push(w)));
+    const seen = new Set(), out = [];
+    const take = w => { const k = w.toLowerCase(); if (!taken.has(k) && !seen.has(k)) { seen.add(k); out.push(w); } };
+    known.forEach(take);
+    // Words with my usual letter first, then the rest in route order.
+    words.filter(w => letter && w[0].toUpperCase() === letter).forEach(take);
+    words.forEach(take);
+    return out.slice(0, 6);
+  } // M. Tembo - 10/10/26
+
+  function renderComboIdeas(c) { // M. Tembo - 10/10/26
+    const box = $("comboIdeas");
+    box.innerHTML = "";
+    if (!c || !c.play.length || (c.named && c.backNamed)) return;
+    const back = c.named; // once the playside has a name, the ideas are for the backside
+    const ideas = comboIdeas(back ? c.back : c.play, back ? c.backPrimary : c.playPrimary);
+    if (!ideas.length) return;
+    box.appendChild(document.createTextNode((back ? "Ideas for the backside: " : "Ideas: ")));
+    ideas.forEach(n => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = n; b.style.cssText = "min-height:30px;padding:.2rem .6rem;margin:2px";
+      b.addEventListener("click", () => { $("fComboName").value = n; $("fComboName").focus(); });
+      box.appendChild(b);
+    });
+  } // M. Tembo - 10/10/26
+
+  // ---------- Run play animation ----------
+  // I build a timeline for every player from his lines. Motion runs before the snap; after the snap
+  // each player runs his drop, then his block, then his route, one after the other. Speeds are in
+  // yards per second of game time, and the playback speed picker slows the clock down. M. Tembo - 9/30/26
+  const SPEED = { motion: 5, drop: 4.5, set: 2.5, pull: 5, route: 7.5, run: 7, ball: 17, pitch: 10, snap: 0.25 }; // M. Tembo - 9/30/26
+  let anim = null; // {raf, start, rate, tl, ball, end, done}. M. Tembo - 9/30/26
+
+  function pathLen(pts) { let s = 0; for (let i = 1; i < pts.length; i++) s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return s; } // M. Tembo - 9/30/26
+
+  // One player's timeline: a list of straight legs, each with its start and end time. M. Tembo - 9/30/26
+  function legsFor(pl, snapT) { // M. Tembo - 9/30/26
+    const a = normalizeAssign(clone(play.assign[pl.id] || {}));
+    const legs = [];
+    const add = (from, pts, speed, t) => {
+      let cur = from;
+      pts.forEach(q => { const d = Math.hypot(q[0] - cur[0], q[1] - cur[1]), t1 = t + d / speed; legs.push({ a: cur, b: q, t0: t, t1 }); cur = q; t = t1; });
+      return [cur, t];
+    };
+    let [cur, t] = add([pl.x, pl.y], a.motion, SPEED.motion, 0);
+    t = Math.max(t, snapT);
+    [cur, t] = add(cur, a.drop, SPEED.drop, t);
+    const dropEnd = t; // when the QB hits his set point (or the snap, with no drop)
+    const isOL = OL_LABELS.includes(pl.label);
+    // A lineman sets slowly; a puller or a back moving to a block gets there at running speed.
+    [cur, t] = add(cur, a.block, isOL && pathLen([cur, ...a.block]) < 3 ? SPEED.set : SPEED.pull, t);
+    [cur, t] = add(cur, a.points, a.carry ? SPEED.run : SPEED.route, t);
+    return { legs, end: t, home: [pl.x, pl.y], dropEnd };
+  } // M. Tembo - 9/30/26
+
+  function posAt(tl, t) { // M. Tembo - 9/30/26
+    if (!tl.legs.length || t <= tl.legs[0].t0) return tl.legs.length ? tl.legs[0].a : tl.home;
+    for (const l of tl.legs) {
+      if (t < l.t0) return l.a; // waiting at the end of motion for the snap
+      if (t <= l.t1) { const s = l.t1 > l.t0 ? (t - l.t0) / (l.t1 - l.t0) : 1; return [l.a[0] + (l.b[0] - l.a[0]) * s, l.a[1] + (l.b[1] - l.a[1]) * s]; }
+    }
+    return tl.legs[tl.legs.length - 1].b;
+  } // M. Tembo - 9/30/26
+
+  // I lead the receiver: the ball goes to where he'll be when it gets there, not where he is at the release. M. Tembo - 9/30/26
+  function leadTarget(from, tl, t0, speed) { // M. Tembo - 9/30/26
+    let tc = t0 + 0.3;
+    for (let i = 0; i < 8; i++) { const q = posAt(tl, tc); tc = t0 + Math.hypot(q[0] - from[0], q[1] - from[1]) / speed; }
+    return tc;
+  } // M. Tembo - 9/30/26
+
+  // The ball's story for this play: at the center, snapped to the QB, then thrown, handed off or pitched. M. Tembo - 9/30/26
+  function ballPlan(tlById, snapT) { // M. Tembo - 9/30/26
+    const qb = byLabel("QB"), c = byLabel("C");
+    if (!qb) return null;
+    const qtl = tlById[qb.id];
+    const ballStart = c ? [c.x, c.y - 0.2] : posAt(qtl, snapT);
+    const events = [{ kind: "hold", until: snapT, at: () => ballStart }];
+    const snapEnd = snapT + (c ? SPEED.snap : 0);
+    events.push({ kind: "fly", from: ballStart, toTl: qtl, t0: snapT, t1: snapEnd, peak: 0 });
+    const readId = Object.keys(play.assign).find(id => play.assign[id].read === 1 && id !== qb.id && tlById[id]);
+    const carrierId = Object.keys(play.assign).find(id => play.assign[id].carry && id !== qb.id && tlById[id]);
+    let after = { tl: qtl, from: snapEnd, label: "QB" };
+    const tossed = carrierId && (play.marks || []).some(m => m.tag === "pitch"); // a drawn toss wins over read 1. M. Tembo - 9/30/26
+    if (readId && !tossed) { // M. Tembo - 9/30/26
+      // Pass: the QB throws when he hits the end of his drop, or on rhythm a beat after the snap with no drop.
+      const tThrow = Math.max(snapEnd + 0.15, qtl.dropEnd + 0.2);
+      const from = posAt(qtl, tThrow), rtl = tlById[readId], tc = leadTarget(from, rtl, tThrow, SPEED.ball);
+      events.push({ kind: "with", tl: qtl, t0: snapEnd, t1: tThrow });
+      const d = Math.hypot(posAt(rtl, tc)[0] - from[0], posAt(rtl, tc)[1] - from[1]);
+      events.push({ kind: "fly", from, toTl: rtl, t0: tThrow, t1: tc, peak: Math.min(3.5, d * 0.12) });
+      after = { tl: rtl, from: tc, label: labelOf(readId), caught: true };
+    } else if (carrierId) {
+      const ctl = tlById[carrierId], pitch = (play.marks || []).some(m => m.tag === "pitch");
+      if (pitch) {
+        // Toss: the QB pitches as he opens, leading the carrier on his way to the edge.
+        const tP = Math.max(snapEnd + 0.1, qtl.dropEnd), from = posAt(qtl, tP), tc = leadTarget(from, ctl, tP, SPEED.pitch);
+        events.push({ kind: "with", tl: qtl, t0: snapEnd, t1: tP });
+        events.push({ kind: "fly", from, toTl: ctl, t0: tP, t1: tc, peak: 0.8 });
+        after = { tl: ctl, from: tc, label: labelOf(carrierId), caught: true };
+      } else {
+        // Handoff: the ball changes hands at the moment the QB and the carrier are closest.
+        let best = snapEnd + 0.2, bd = Infinity;
+        for (let t = snapEnd + 0.2; t < snapEnd + 2.5; t += 0.02) { const a = posAt(qtl, t), b = posAt(ctl, t), d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < bd) { bd = d; best = t; } }
+        events.push({ kind: "with", tl: qtl, t0: snapEnd, t1: best });
+        after = { tl: ctl, from: best, label: labelOf(carrierId) };
+      }
+    }
+    events.push({ kind: "with", tl: after.tl, t0: after.from, t1: Infinity });
+    return { events, end: after.from, label: after.label, pass: !!readId && !tossed, run: (!readId || tossed) && !!carrierId }; // M. Tembo - 9/30/26
+  } // M. Tembo - 9/30/26
+
+  function ballAt(plan, t) { // M. Tembo - 9/30/26
+    for (const e of plan.events) {
+      if (e.kind === "hold" && t <= e.until) return [...e.at(), 0, 0];
+      if (e.kind === "with" && t >= e.t0 && t <= e.t1) { const q = posAt(e.tl, t); return [q[0] + 0.6, q[1] - 0.4, 0, -30]; }
+      if (e.kind === "fly" && t >= e.t0 && t <= e.t1) {
+        const to = posAt(e.toTl, e.t1), s = e.t1 > e.t0 ? (t - e.t0) / (e.t1 - e.t0) : 1;
+        const x = e.from[0] + (to[0] - e.from[0]) * s, y = e.from[1] + (to[1] - e.from[1]) * s;
+        const ang = Math.atan2(to[1] - e.from[1], to[0] - e.from[0]) * 180 / Math.PI;
+        return [x, y, 4 * e.peak * s * (1 - s), ang];
+      }
+    }
+    const last = plan.events[plan.events.length - 1], q = posAt(last.tl, t);
+    return [q[0] + 0.6, q[1] - 0.4, 0, -30];
+  } // M. Tembo - 9/30/26
+
+  function stopAnim() { // M. Tembo - 9/30/26
+    if (!anim) return;
+    cancelAnimationFrame(anim.raf);
+    anim = null;
+    $("btnReset").disabled = true;
+    $("btnRun").textContent = "Run play";
+  } // M. Tembo - 9/30/26
+
+  function runPlay() { // M. Tembo - 9/30/26
+    render();
+    drawing = null;
+    // Motion first: the snap comes when the longest motion finishes, plus a short beat to get set.
+    const motionT = Math.max(0, ...play.players.map(pl => pathLen([[pl.x, pl.y], ...((play.assign[pl.id] || {}).motion || [])]) / SPEED.motion));
+    const snapT = motionT > 0 ? motionT + 0.3 : 0.4;
+    const tl = {};
+    play.players.forEach(pl => tl[pl.id] = legsFor(pl, snapT));
+    const plan = ballPlan(tl, snapT);
+    const end = Math.max(...Object.values(tl).map(x => x.end), plan ? plan.end : 0) + 0.6;
+    const rate = +$("runSpeed").value || 0.5;
+    anim = { raf: 0, start: performance.now(), rate, tl, plan, end };
+    $("btnReset").disabled = false;
+    $("btnRun").textContent = "Replay";
+    $("hint").textContent = plan ? (plan.pass ? "Running the play. The QB throws to read 1 (" + plan.label + ")." : plan.run ? "Running the play. The ball goes to " + plan.label + "." : "Running the play. Set read 1 with Read order, or a ball carrier, to see where the ball goes.") : "Running the play.";
+    const frame = (now) => {
+      if (!anim) return;
+      const t = Math.min((now - anim.start) / 1000 * anim.rate, anim.end);
+      const pos = {};
+      Object.keys(anim.tl).forEach(id => pos[id] = posAt(anim.tl[id], t));
+      drawPlay(svg, play, { pos, ball: anim.plan ? ballAt(anim.plan, t) : null });
+      if (t < anim.end) anim.raf = requestAnimationFrame(frame);
+      else $("hint").textContent = "Play over. Replay it, or tap the field or Reset to go back to the formation.";
+    };
+    anim.raf = requestAnimationFrame(frame);
+  } // M. Tembo - 9/30/26
+  $("btnRun").addEventListener("click", runPlay); // M. Tembo - 9/30/26
+  $("btnReset").addEventListener("click", () => render()); // M. Tembo - 9/30/26
+
   // ---------- Saved formations ----------
   // I store players relative to the ball, the same way the stock formations are written. M. Tembo - 9/28/26
-  function lsFormsSave() { try { localStorage.setItem(LS_FORMS, JSON.stringify(myForms)); return true; } catch (e) { return false; } } // M. Tembo - 9/28/26
+  function lsFormsSave() { return lsWrite(LS_FORMS, myForms); } // M. Tembo - 9/30/26
   function formMsg(t) { $("formMsg").textContent = t; } // M. Tembo - 9/28/26
 
   async function saveFormation() { // M. Tembo - 9/28/26
@@ -1360,22 +2093,101 @@
   $("btnSaveForm").addEventListener("click", saveFormation); // M. Tembo - 9/28/26
   $("fFormName").addEventListener("keydown", e => { if (e.key === "Enter") saveFormation(); }); // M. Tembo - 9/28/26
 
-  $("btnRemoveForm").addEventListener("click", () => { // M. Tembo - 9/28/26
-    const matches = myForms.filter(f => f.format === play.format && f.name.toLowerCase() === play.formation.toLowerCase());
-    if (!matches.length) return;
-    const name = matches[0].name;
-    const fmt = { "11": "11-man", "7": "7v7", "5": "5v5 flag" }[play.format];
-    const stock = Object.keys(FORMATIONS[play.format]).find(k => k.toLowerCase() === name.toLowerCase());
-    confirmThen("Remove the saved formation \"" + name + "\" (" + fmt + ")?" + (stock ? " The stock " + stock + " comes back in its place." : "") + " Plays already drawn from it keep their alignment.", "Remove", async () => {
-      if (db) {
-        try { for (const f of matches) await db.collection("formations").doc(f.id).delete(); } catch (e) { formMsg("Couldn't remove it. Try again."); return; }
-      }
-      myForms = myForms.filter(f => !matches.includes(f));
+  // Rename, remove and restore formations. A formation is one record per format and name; stock ones
+  // are hidden with a record of their own so they stay hidden on every device. M. Tembo - 10/10/26
+  const FMT_NAME = { "11": "11-man", "7": "7v7", "5": "5v5 flag" }; // M. Tembo - 10/10/26
+  const sameName = (a, b) => (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase(); // M. Tembo - 10/10/26
+  function stockName(format, name) { return Object.keys(FORMATIONS[format] || {}).find(k => sameName(k, name)); } // M. Tembo - 10/10/26
+
+  function renderFormTools() { // M. Tembo - 10/10/26
+    const known = !!getFormations(play.format)[play.formation];
+    $("btnRemoveForm").hidden = !known;
+    $("btnRenameForm").disabled = !known;
+    $("formRenameLabel").textContent = known ? "Rename " + play.formation : "Rename this formation";
+    $("btnRemoveForm").textContent = isMine(play.format, play.formation) ? "Remove saved formation" : "Hide stock formation";
+    const box = $("hiddenForms");
+    box.innerHTML = "";
+    const hidden = myForms.filter(f => f.format === play.format && f.hidden);
+    if (!hidden.length) return;
+    box.appendChild(document.createTextNode("Hidden stock formations: "));
+    hidden.forEach((h, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "Restore " + h.name; b.style.cssText = "min-height:30px;padding:.2rem .5rem;margin:2px";
+      b.addEventListener("click", () => restoreForm(h));
+      box.appendChild(b);
+    });
+  } // M. Tembo - 10/10/26
+
+  async function writeForm(doc) { if (db) await db.collection("formations").doc(doc.id).set(doc); myForms = myForms.filter(f => f.id !== doc.id).concat(doc); } // M. Tembo - 10/10/26
+  async function dropForm(rec) { if (db) await db.collection("formations").doc(rec.id).delete(); myForms = myForms.filter(f => f !== rec); } // M. Tembo - 10/10/26
+
+  // Taking a name off the list: my records under it go away, and a stock one of the same name gets a hidden record. M. Tembo - 10/10/26
+  async function retireName(format, name) { // M. Tembo - 10/10/26
+    for (const rec of myForms.filter(f => f.format === format && sameName(f.name, name))) await dropForm(rec);
+    const stock = stockName(format, name);
+    if (stock) await writeForm({ id: formId(format, stock), name: stock, format, players: [], hidden: true, updatedAt: new Date().toISOString() });
+  } // M. Tembo - 10/10/26
+
+  async function renameForm() { // M. Tembo - 10/10/26
+    const oldName = play.formation, format = play.format, newName = $("fFormRename").value.trim();
+    const players = getFormations(format)[oldName];
+    if (!players) return;
+    if (!newName) { formMsg("Type the new name, then tap Rename."); $("fFormRename").focus(); return; }
+    if (formId(format, newName).length < 3) { formMsg("Use at least one letter or number in the name."); return; }
+    if (sameName(oldName, newName) && oldName === newName) { formMsg("That's already its name."); return; }
+    const target = Object.keys(getFormations(format)).find(k => sameName(k, newName) && !sameName(k, oldName));
+    const moving = plays.filter(p => p.format === format && sameName(p.formation, oldName));
+    const go = async () => {
+      try {
+        // Merging keeps the alignment already saved under the new name; a plain rename carries this alignment over.
+        if (!target) {
+          if (!sameName(oldName, newName)) await retireName(format, oldName);
+          else for (const rec of myForms.filter(f => f.format === format && sameName(f.name, oldName))) await dropForm(rec);
+          await writeForm({ id: formId(format, newName), name: newName, format, players, updatedAt: new Date().toISOString() });
+        } else await retireName(format, oldName);
+        const finalName = target || newName, stamp = new Date().toISOString();
+        for (const p of moving) {
+          const doc = { ...p, formation: finalName, updatedAt: stamp };
+          if (db) await db.collection("plays").doc(p.id).set(doc);
+          Object.assign(p, doc);
+        }
+        if (!db) { ghNote = "Rename formation: " + oldName + " to " + finalName; lsFormsSave(); lsSave(); }
+        play.formation = finalName;
+        $("fFormRename").value = "";
+        fillFormations(); renderBook(); render();
+        formMsg((target ? "Merged " + oldName + " into " + finalName : "Renamed " + oldName + " to " + finalName) + (moving.length ? ", and moved " + moving.length + " play" + (moving.length === 1 ? "" : "s") + " with it." : "."));
+      } catch (e) { formMsg("Couldn't rename it. Try again."); }
+    };
+    if (target) confirmThen(target + " is already a formation in " + FMT_NAME[format] + ". Merge " + oldName + " into it? " + target + " keeps its own alignment, " + oldName + " comes off the list" + (moving.length ? ", and its " + moving.length + " play" + (moving.length === 1 ? " moves" : "s move") + " to " + target : "") + ".", "Merge", go);
+    else go();
+  } // M. Tembo - 10/10/26
+  $("btnRenameForm").addEventListener("click", renameForm); // M. Tembo - 10/10/26
+  $("fFormRename").addEventListener("keydown", e => { if (e.key === "Enter") renameForm(); }); // M. Tembo - 10/10/26
+
+  $("btnRemoveForm").addEventListener("click", () => { // M. Tembo - 10/10/26
+    const name = play.formation, format = play.format, mine = isMine(format, name), stock = stockName(format, name);
+    if (!getFormations(format)[name]) return;
+    const count = plays.filter(p => p.format === format && sameName(p.formation, name)).length;
+    const msgText = mine
+      ? "Remove the saved formation \"" + name + "\" (" + FMT_NAME[format] + ")?" + (stock ? " The stock " + stock + " comes back in its place." : "")
+      : "Hide the stock formation \"" + name + "\" (" + FMT_NAME[format] + ") from the list? I can restore it later.";
+    confirmThen(msgText + (count ? " The " + count + " play" + (count === 1 ? "" : "s") + " filed under it keep their alignment and name." : " Plays already drawn from it keep their alignment."), mine ? "Remove" : "Hide", async () => {
+      try {
+        if (mine) { for (const rec of myForms.filter(f => f.format === format && sameName(f.name, name))) await dropForm(rec); }
+        else await writeForm({ id: formId(format, name), name, format, players: [], hidden: true, updatedAt: new Date().toISOString() });
+      } catch (e) { formMsg("Couldn't change it. Try again."); return; }
       if (!db) lsFormsSave();
       fillFormations(); render();
-      formMsg("Removed " + name + ".");
+      formMsg((mine ? "Removed " : "Hid ") + name + ".");
     });
-  }); // M. Tembo - 9/28/26
+  }); // M. Tembo - 10/10/26
+
+  async function restoreForm(rec) { // M. Tembo - 10/10/26
+    try { await dropForm(rec); } catch (e) { formMsg("Couldn't restore it. Try again."); return; }
+    if (!db) lsFormsSave();
+    fillFormations(); render();
+    formMsg("Restored " + rec.name + ".");
+  } // M. Tembo - 10/10/26
 
   // ---------- Export and import ----------
   // I export plays and my saved routes together in one .json file. Importing merges by play id:
@@ -1480,6 +2292,186 @@
     }
   });
 
+  // ---------- GitHub sync ----------
+  // When I connect a repo, this browser's copy stays the working copy and every local save also pushes
+  // the whole playbook to one JSON file through the GitHub contents API. Before each push I pull the file
+  // and merge by id, newest updatedAt wins, so two devices don't overwrite each other. A removed play,
+  // route or formation leaves a dated tombstone so the merge doesn't bring it back. M. Tembo - 9/30/26
+  const LS_GH = "offense-playbook-github-v1"; // M. Tembo - 9/30/26
+  const LS_TOMBS = "offense-playbook-deleted-v1"; // M. Tembo - 9/30/26
+  let gh = null;          // {token, owner, repo, branch, path} when connected. M. Tembo - 9/30/26
+  let ghSha = null;       // sha of the file as I last saw it. M. Tembo - 9/30/26
+  let ghTimer = null, ghBusy = false, ghAgain = false, ghDirty = false; // M. Tembo - 9/30/26
+  let ghNote = "";        // commit message for the next push. M. Tembo - 9/30/26
+  try { gh = JSON.parse(localStorage.getItem(LS_GH) || "null"); } catch (e) { gh = null; } // M. Tembo - 9/30/26
+
+  function tombs() { try { return JSON.parse(localStorage.getItem(LS_TOMBS) || "{}"); } catch (e) { return {}; } } // M. Tembo - 9/30/26
+
+  // Every local write goes through here: anything that was in the old copy and isn't in the new one gets a tombstone. M. Tembo - 9/30/26
+  function lsWrite(key, list, quiet) { // M. Tembo - 9/30/26
+    try {
+      if (!quiet) {
+        let before = [];
+        try { before = JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { before = []; }
+        const now = new Set(list.map(x => x.id)), t = tombs(), stamp = new Date().toISOString();
+        let changed = false;
+        before.forEach(x => { if (x && x.id && !now.has(x.id)) { t[x.id] = stamp; changed = true; } });
+        if (changed) localStorage.setItem(LS_TOMBS, JSON.stringify(t));
+      }
+      localStorage.setItem(key, JSON.stringify(list));
+      if (!quiet) ghQueue();
+      return true;
+    } catch (e) { return false; }
+  } // M. Tembo - 9/30/26
+
+  function ghStatus(t) { $("storeStatus").textContent = t; } // M. Tembo - 9/30/26
+  function ghClock() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); } // M. Tembo - 9/30/26
+
+  function b64encode(s) { // M. Tembo - 9/30/26
+    const bytes = new TextEncoder().encode(s); let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  } // M. Tembo - 9/30/26
+  function b64decode(b) { return new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), c => c.charCodeAt(0))); } // M. Tembo - 9/30/26
+
+  function ghUrl(cfg) { return "https://api.github.com/repos/" + encodeURIComponent(cfg.owner) + "/" + encodeURIComponent(cfg.repo) + "/contents/" + cfg.path.split("/").map(encodeURIComponent).join("/"); } // M. Tembo - 9/30/26
+  function ghHeaders(cfg, accept) { return { Authorization: "Bearer " + cfg.token, Accept: accept || "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }; } // M. Tembo - 9/30/26
+  function ghError(r) { // M. Tembo - 9/30/26
+    if (r.status === 401) return "GitHub rejected the token. It may have expired.";
+    if (r.status === 403) return "The token can't write to that repo. It needs Contents: Read and write on it.";
+    if (r.status === 404) return "GitHub can't find that repo or branch with this token.";
+    return "GitHub answered " + r.status + ". Try again.";
+  } // M. Tembo - 9/30/26
+
+  // Pull the file. A missing file is fine: the first push creates it. M. Tembo - 9/30/26
+  async function ghPull(cfg) { // M. Tembo - 9/30/26
+    const r = await fetch(ghUrl(cfg) + "?ref=" + encodeURIComponent(cfg.branch), { headers: ghHeaders(cfg), cache: "no-store" });
+    if (r.status === 404) {
+      // A 404 can also mean a bad repo or branch, so I check the repo before treating the file as new.
+      const rr = await fetch("https://api.github.com/repos/" + encodeURIComponent(cfg.owner) + "/" + encodeURIComponent(cfg.repo) + "/branches/" + encodeURIComponent(cfg.branch), { headers: ghHeaders(cfg), cache: "no-store" });
+      if (!rr.ok) throw new Error(ghError(rr));
+      return { sha: null, book: null };
+    }
+    if (!r.ok) throw new Error(ghError(r));
+    const meta = await r.json();
+    let text = meta.content ? b64decode(meta.content) : "";
+    if (!text && meta.size > 0) {
+      // Files over 1 MB come back without content, so I ask for the raw bytes.
+      const raw = await fetch(ghUrl(cfg) + "?ref=" + encodeURIComponent(cfg.branch), { headers: ghHeaders(cfg, "application/vnd.github.raw+json"), cache: "no-store" });
+      if (!raw.ok) throw new Error(ghError(raw));
+      text = await raw.text();
+    }
+    let book = null;
+    try { book = text ? JSON.parse(text) : null; } catch (e) { throw new Error(cfg.path + " in the repo isn't valid JSON, so I left it alone."); }
+    if (book && book.app !== EXPORT_APP) throw new Error(cfg.path + " in the repo isn't a playbook file, so I left it alone.");
+    return { sha: meta.sha, book };
+  } // M. Tembo - 9/30/26
+
+  // Newest copy of each id wins, and a tombstone newer than a copy removes it. I drop tombstones after 180 days. M. Tembo - 9/30/26
+  function mergeBooks(local, remote) { // M. Tembo - 9/30/26
+    const dead = Object.assign({}, (remote && remote.deleted) || {});
+    Object.entries(local.deleted || {}).forEach(([id, t]) => { if (!dead[id] || t > dead[id]) dead[id] = t; });
+    const cutoff = new Date(Date.now() - 180 * 864e5).toISOString();
+    Object.keys(dead).forEach(id => { if (dead[id] < cutoff) delete dead[id]; });
+    const one = (a, b) => {
+      const by = {};
+      [...(a || []), ...(b || [])].forEach(x => { if (x && x.id && (!by[x.id] || (x.updatedAt || "") > (by[x.id].updatedAt || ""))) by[x.id] = x; });
+      return Object.values(by).filter(x => !dead[x.id] || (x.updatedAt || "") > dead[x.id]).sort((x, y) => x.id.localeCompare(y.id));
+    };
+    return { plays: one(local.plays, remote && remote.plays), routes: one(local.routes, remote && remote.routes), formations: one(local.formations, remote && remote.formations), deleted: dead };
+  } // M. Tembo - 9/30/26
+
+  function ghQueue() { // M. Tembo - 9/30/26
+    if (!gh || db) return;
+    ghDirty = true;
+    ghStatus("GitHub: saving");
+    clearTimeout(ghTimer);
+    ghTimer = setTimeout(() => ghSync(), 1200); // I batch quick edits into one commit.
+  } // M. Tembo - 9/30/26
+
+  async function ghSync() { // M. Tembo - 9/30/26
+    if (!gh || db) return;
+    if (ghBusy) { ghAgain = true; return; }
+    ghBusy = true;
+    const cfg = gh;
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { sha, book } = await ghPull(cfg);
+        const merged = mergeBooks({ plays, routes: myRoutes, formations: myForms, deleted: tombs() }, book);
+        // I bring anything new from the repo into this browser without stamping new tombstones.
+        plays = merged.plays; myRoutes = merged.routes; myForms = merged.formations;
+        lsWrite(LS_KEY, plays, true); lsWrite(LS_ROUTES, myRoutes, true); lsWrite(LS_FORMS, myForms, true);
+        localStorage.setItem(LS_TOMBS, JSON.stringify(merged.deleted));
+        fillFormations(); renderBook(); renderMyRoutes(); renderTree();
+        const same = book && JSON.stringify(mergeBooks(book, null)) === JSON.stringify(mergeBooks(merged, null));
+        if (same) { ghSha = sha; break; }
+        const body = { app: EXPORT_APP, version: 1, updatedAt: new Date().toISOString(), plays: merged.plays, routes: merged.routes, formations: merged.formations, deleted: merged.deleted };
+        const put = await fetch(ghUrl(cfg), {
+          method: "PUT", headers: Object.assign(ghHeaders(cfg), { "Content-Type": "application/json" }),
+          body: JSON.stringify(Object.assign({ message: "PlayDesigner: " + (ghNote || "Update playbook") + " (" + merged.plays.length + " plays)", content: b64encode(JSON.stringify(body, null, 1)), branch: cfg.branch }, sha ? { sha } : {}))
+        });
+        if (put.ok) { ghSha = (await put.json()).content.sha; ghNote = ""; break; }
+        // 409 or 422 means another device pushed since my pull, so I pull and merge again.
+        if ((put.status === 409 || put.status === 422) && attempt < 2) continue;
+        throw new Error(ghError(put));
+      }
+      ghDirty = false;
+      ghStatus("GitHub: synced " + ghClock());
+      return true;
+    } catch (e) {
+      ghStatus("GitHub: not synced, saved in this browser");
+      bookMsg((e && e.message && !/fetch/i.test(e.message) ? e.message : "Couldn't reach GitHub. Your changes are saved in this browser and go up on the next save.") + "");
+      return false;
+    } finally {
+      ghBusy = false;
+      if (ghAgain) { ghAgain = false; ghSync(); }
+    }
+  } // M. Tembo - 9/30/26
+
+  // Settings dialog. I fill the repo from the Pages address when I can. M. Tembo - 9/30/26
+  function ghDefaults() { // M. Tembo - 9/30/26
+    const host = location.hostname.endsWith(".github.io") ? location.hostname.split(".")[0] : "";
+    const repo = host ? (location.pathname.split("/").filter(Boolean)[0] || host + ".github.io") : "";
+    return { owner: host, repo, branch: "main", path: "data/playbook.json" };
+  } // M. Tembo - 9/30/26
+  $("btnGitHub").addEventListener("click", () => { // M. Tembo - 9/30/26
+    const c = gh || ghDefaults();
+    $("ghToken").value = ""; $("ghToken").placeholder = gh ? "Saved in this browser. Leave blank to keep it." : "github_pat_...";
+    $("ghOwner").value = c.owner || ""; $("ghRepo").value = c.repo || ""; $("ghBranch").value = c.branch || "main"; $("ghPath").value = c.path || "data/playbook.json";
+    $("ghDisconnect").hidden = !gh;
+    $("ghMsg").textContent = gh ? "Connected to " + gh.owner + "/" + gh.repo + ", " + gh.path + " on " + gh.branch + "." : "";
+    $("ghDlg").showModal();
+  }); // M. Tembo - 9/30/26
+  $("ghClose").addEventListener("click", () => $("ghDlg").close()); // M. Tembo - 9/30/26
+  $("ghConnect").addEventListener("click", async () => { // M. Tembo - 9/30/26
+    const cfg = {
+      token: $("ghToken").value.trim() || (gh && gh.token) || "",
+      owner: $("ghOwner").value.trim(), repo: $("ghRepo").value.trim(),
+      branch: $("ghBranch").value.trim() || "main", path: $("ghPath").value.trim().replace(/^\/+/, "") || "data/playbook.json"
+    };
+    if (!cfg.token || !cfg.owner || !cfg.repo) { $("ghMsg").textContent = "I need the token, owner and repository."; return; }
+    $("ghMsg").textContent = "Checking the repo...";
+    try { await ghPull(cfg); } catch (e) { $("ghMsg").textContent = e.message || "Couldn't reach GitHub."; return; }
+    gh = cfg;
+    try { localStorage.setItem(LS_GH, JSON.stringify(gh)); } catch (e) { $("ghMsg").textContent = "This browser won't let me store the settings."; return; }
+    ghNote = "Connect " + (location.hostname || "a local copy");
+    $("ghMsg").textContent = "Syncing...";
+    const ok = await ghSync();
+    $("ghMsg").textContent = ok ? "Synced " + plays.length + " plays with " + gh.owner + "/" + gh.repo + "." : $("bookMsg").textContent;
+    if (ok) setTimeout(() => $("ghDlg").close(), 900);
+  }); // M. Tembo - 9/30/26
+  $("ghDisconnect").addEventListener("click", () => { // M. Tembo - 9/30/26
+    // Disconnecting only forgets the token and settings in this browser. The file in the repo stays put.
+    gh = null; ghSha = null;
+    try { localStorage.removeItem(LS_GH); } catch (e) {}
+    ghStatus("Saved in this browser");
+    $("ghMsg").textContent = "Disconnected. This browser keeps its copy of the playbook, and the file in the repo is untouched.";
+    $("ghDisconnect").hidden = true;
+  }); // M. Tembo - 9/30/26
+  // I pull again whenever I come back to the tab, so a play saved on another device shows up. M. Tembo - 9/30/26
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && gh && !db) ghSync(); }); // M. Tembo - 9/30/26
+  window.addEventListener("beforeunload", (e) => { if (gh && ghDirty) { e.preventDefault(); e.returnValue = ""; } }); // warn me if a push is still pending. M. Tembo - 9/30/26
+
   // ---------- Startup ----------
   syncForm(); render();
 
@@ -1491,6 +2483,7 @@
     }
     if (downloads) $("btnExport").hidden = false;
     if (db) {
+      $("btnGitHub").hidden = true; // the hosted artifact syncs on its own, so I only offer GitHub sync on my own page. M. Tembo - 9/30/26
       $("storeStatus").textContent = "Synced";
       db.collection("plays").onSnapshot(
         (qs) => { plays = qs.docs.map(d => ({ ...d.data(), id: d.id })); renderBook(); },
@@ -1512,6 +2505,7 @@
       renderMyRoutes(); render(); // M. Tembo - 9/28/26
       $("storeStatus").textContent = "Saved in this browser";
       renderBook();
+      if (gh) { ghStatus("GitHub: loading"); ghSync(); } // M. Tembo - 9/30/26
     }
   }
   connect();
