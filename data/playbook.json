@@ -1,7 +1,7 @@
 {
  "app": "offense-playbook",
  "version": 1,
- "updatedAt": "2026-10-11T11:44:10.774Z",
+ "updatedAt": "2026-10-11T20:03:10.624Z",
  "plays": [
   {
    "id": "hmww7n1j6zuo",
@@ -1298,6 +1298,17 @@
    ],
    "back": null,
    "updatedAt": "2026-10-10T22:47:57.801Z"
+  },
+  {
+   "id": "wyzrt6n03433",
+   "kind": "concept",
+   "name": "Lance",
+   "pts": [],
+   "play": [
+    "post"
+   ],
+   "back": null,
+   "updatedAt": "2026-10-11T20:03:09.039Z"
   }
  ],
  "formations": [
