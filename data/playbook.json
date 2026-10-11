@@ -1,7 +1,7 @@
 {
  "app": "offense-playbook",
  "version": 1,
- "updatedAt": "2026-10-11T20:03:23.884Z",
+ "updatedAt": "2026-10-11T20:04:59.012Z",
  "plays": [
   {
    "id": "hmww7n1j6zuo",
@@ -983,6 +983,312 @@
     }
    ],
    "updatedAt": "2026-10-10T19:54:39.604Z"
+  },
+  {
+   "id": "yidsy3oc5fr4",
+   "name": "Spread 80 Y Jet Lance Knife",
+   "format": "11",
+   "formation": "Spread",
+   "concept": "Slide pro right",
+   "notes": "",
+   "players": [
+    {
+     "id": "70k70ae3rv4t",
+     "label": "LT",
+     "x": 22.1665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "jiym1s5grv4t",
+     "label": "LG",
+     "x": 24.6665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "zz19q1dkrv4t",
+     "label": "C",
+     "x": 26.6665,
+     "y": 31,
+     "shape": "sq"
+    },
+    {
+     "id": "wz63duw4rv4t",
+     "label": "RG",
+     "x": 28.6665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "hoppnt8qrv4t",
+     "label": "RT",
+     "x": 31.1665,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "evuc9zjdrv4t",
+     "label": "QB",
+     "x": 26.5,
+     "y": 35,
+     "shape": "o"
+    },
+    {
+     "id": "psz6897nrv4t",
+     "label": "RB",
+     "x": 28.6665,
+     "y": 35.5,
+     "shape": "o"
+    },
+    {
+     "id": "edzjpnx5rv4t",
+     "label": "X",
+     "x": 5.666499999999999,
+     "y": 31,
+     "shape": "o"
+    },
+    {
+     "id": "ed31x9zdrv4t",
+     "label": "H",
+     "x": 14.6665,
+     "y": 32,
+     "shape": "o"
+    },
+    {
+     "id": "sjlialjzrv4t",
+     "label": "Y",
+     "x": 38.6665,
+     "y": 32,
+     "shape": "o"
+    },
+    {
+     "id": "yc8et06urv4t",
+     "label": "Z",
+     "x": 47.6665,
+     "y": 31,
+     "shape": "o"
+    }
+   ],
+   "assign": {
+    "sjlialjzrv4t": {
+     "points": [
+      [
+       25,
+       26
+      ],
+      [
+       35,
+       24
+      ]
+     ],
+     "motion": [
+      [
+       19.5,
+       32
+      ]
+     ],
+     "block": [],
+     "drop": [],
+     "read": 2,
+     "routeName": ""
+    },
+    "yc8et06urv4t": {
+     "points": [
+      [
+       47.5,
+       21
+      ],
+      [
+       40.5,
+       11
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "drop": [],
+     "dropSteps": 0,
+     "carry": false,
+     "read": 3,
+     "routeName": "Post"
+    },
+    "ed31x9zdrv4t": {
+     "points": [
+      [
+       40.5,
+       28
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "drop": [
+      [
+       15.4,
+       32.1
+      ]
+     ],
+     "read": 1,
+     "routeName": "",
+     "dropSteps": 0
+    },
+    "edzjpnx5rv4t": {
+     "points": [
+      [
+       5.5,
+       19
+      ],
+      [
+       15.5,
+       19
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "drop": [],
+     "dropSteps": 0,
+     "carry": false,
+     "read": 4,
+     "routeName": "Dig"
+    },
+    "70k70ae3rv4t": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       21,
+       32.8
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "jiym1s5grv4t": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       23.5,
+       32.8
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "zz19q1dkrv4t": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       25.5,
+       32.8
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "wz63duw4rv4t": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       27.5,
+       32.8
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "hoppnt8qrv4t": {
+     "points": [],
+     "motion": [],
+     "block": [
+      [
+       30,
+       32.8
+      ]
+     ],
+     "drop": [],
+     "read": 0,
+     "carry": false
+    },
+    "evuc9zjdrv4t": {
+     "points": [],
+     "motion": [],
+     "block": [],
+     "drop": [
+      [
+       27.3,
+       34.8
+      ],
+      [
+       27.9,
+       34.1
+      ],
+      [
+       27.9,
+       37.1
+      ],
+      [
+       28.6,
+       37.9
+      ],
+      [
+       30.5,
+       38.3
+      ],
+      [
+       32.4,
+       38.2
+      ],
+      [
+       34.6,
+       37.4
+      ],
+      [
+       35.5,
+       36.6
+      ]
+     ],
+     "read": 0,
+     "dropSteps": 0
+    },
+    "psz6897nrv4t": {
+     "points": [
+      [
+       28.6,
+       34.6
+      ],
+      [
+       28.2,
+       34.3
+      ],
+      [
+       25,
+       33.7
+      ],
+      [
+       22.8,
+       33.8
+      ],
+      [
+       20,
+       32.8
+      ]
+     ],
+     "motion": [],
+     "block": [],
+     "drop": [],
+     "read": 0,
+     "carry": true,
+     "routeName": ""
+    }
+   },
+   "marks": [],
+   "updatedAt": "2026-10-11T20:04:57.472Z"
   },
   {
    "assign": {
